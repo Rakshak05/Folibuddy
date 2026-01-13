@@ -94,6 +94,29 @@
             margin-top: -10px;
             margin-bottom: 15px;
         }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message h3 {
+            margin-top: 0;
+        }
+
+        .path-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
     </style>
 </head>
 
@@ -104,7 +127,7 @@
         <p class="subtitle">Review and modify the extracted information before generating your cover letter and
             portfolio.</p>
 
-        <form method="POST" action="/generate">
+        <form id="resume-form" method="POST" action="/generate">
 
             <h2>📋 Basic Information</h2>
             <label>Full Name</label>
@@ -132,10 +155,68 @@
             </div>
             {% endfor %}
 
-            <button type="submit">🎯 Generate Cover Letter & Portfolio</button>
+            <button type="submit" id="submit-btn">🎯 Generate Portfolio</button>
 
         </form>
+
+        <div class="success-message" id="success-message">
+            <h3>✅ Portfolio Generated Successfully!</h3>
+            <p>Your personal portfolio has been created at:</p>
+            <div class="path-display" id="portfolio-path"></div>
+            <p><strong>What's next?</strong></p>
+            <ul>
+                <li>Open the folder on your Desktop</li>
+                <li>Double-click <code>index.html</code> to view your portfolio</li>
+                <li>Customize the content as needed</li>
+                <li>Push to GitHub and enable GitHub Pages to publish online</li>
+            </ul>
+        </div>
     </div>
+
+    <script>
+        document.getElementById('resume-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const successMsg = document.getElementById('success-message');
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Generating...';
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Show success message
+                    document.getElementById('portfolio-path').textContent = data.path;
+                    successMsg.style.display = 'block';
+
+                    // Scroll to success message
+                    successMsg.scrollIntoView({ behavior: 'smooth' });
+
+                    // Update button
+                    submitBtn.textContent = '✅ Portfolio Generated!';
+                    submitBtn.style.backgroundColor = '#28a745';
+                } else {
+                    alert('Error generating portfolio. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🎯 Generate Portfolio';
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🎯 Generate Portfolio';
+            }
+        });
+    </script>
 
 </body>
 

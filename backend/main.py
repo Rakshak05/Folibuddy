@@ -7,6 +7,7 @@ from typing import List
 
 from .resume_parser import extract_text_from_pdf, parse_resume
 from .utils import clean_text
+from .portfolio import generate_portfolio
 
 app = FastAPI(title="Resume to Portfolio API")
 
@@ -99,6 +100,10 @@ async def generate(request: Request):
         "projects": projects
     }
 
-    # For now, return JSON to confirm correctness
-    # Next step will use this for cover letter & portfolio generation
-    return resume
+    # Generate portfolio
+    portfolio_path = generate_portfolio(resume)
+
+    return {
+        "message": "Personal portfolio generated successfully",
+        "path": portfolio_path
+    }
