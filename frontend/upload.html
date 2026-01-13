@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Resume to Portfolio - Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .upload-container {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background-color: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .file-label:hover {
+            background-color: #764ba2;
+        }
+
+        .file-name {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .note {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            text-align: left;
+            font-size: 14px;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="upload-container">
+        <h1>📄 Resume to Portfolio</h1>
+        <p class="subtitle">Transform your resume into a professional cover letter and portfolio</p>
+
+        <form id="upload-form" onsubmit="handleSubmit(event)">
+            <div class="upload-area" onclick="document.getElementById('resume').click()">
+                <div class="upload-icon">📤</div>
+                <label for="resume" class="file-label">Choose PDF Resume</label>
+                <input type="file" id="resume" name="file" accept=".pdf" onchange="showFileName()">
+                <div class="file-name" id="file-name">No file selected</div>
+            </div>
+
+            <button type="submit" id="submit-btn">Upload & Continue →</button>
+        </form>
+
+        <div class="note">
+            <strong>💡 What happens next?</strong><br>
+            1. We'll extract your resume information<br>
+            2. You can review and edit the details<br>
+            3. Generate your cover letter and portfolio
+        </div>
+    </div>
+
+    <script>
+        function showFileName() {
+            const input = document.getElementById('resume');
+            const fileNameDiv = document.getElementById('file-name');
+
+            if (input.files.length > 0) {
+                fileNameDiv.textContent = '✅ ' + input.files[0].name;
+                fileNameDiv.style.color = '#28a745';
+            } else {
+                fileNameDiv.textContent = 'No file selected';
+                fileNameDiv.style.color = '#666';
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('resume');
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (!fileInput.files.length) {
+                alert('Please select a PDF file first!');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload-resume-web', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+
+                    // Open the editor page in the same window
+                    const newWindow = window.open('', '_self');
+                    newWindow.document.write(html);
+                    newWindow.document.close();
+                } else {
+                    alert('Error uploading file. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Upload & Continue →';
+                }
+            } catch (error) {
+                alert('Error connecting to server. Make sure the backend is running at http://127.0.0.1:8000');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload & Continue →';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit Resume Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #444;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .project-block {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .skills-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>✏️ Edit Your Resume Details</h1>
+        <p class="subtitle">Review and modify the extracted information before generating your cover letter and
+            portfolio.</p>
+
+        <form method="POST" action="/generate">
+
+            <h2>📋 Basic Information</h2>
+            <label>Full Name</label>
+            <input type="text" name="name" value="{{ data.name }}" required>
+
+            <label>Email Address</label>
+            <input type="email" name="email" value="{{ data.email }}" required>
+
+            <label>Phone Number</label>
+            <input type="tel" name="phone" value="{{ data.phone }}" required>
+
+            <h2>💡 Skills</h2>
+            <label>Your Skills (comma separated)</label>
+            <textarea name="skills" required>{{ data.skills | join(", ") }}</textarea>
+            <div class="skills-hint">Tip: Separate each skill with a comma</div>
+
+            <h2>🚀 Projects</h2>
+            {% for project in data.projects %}
+            <div class="project-block">
+                <label>Project {{ loop.index }} - Title</label>
+                <input type="text" name="project_title_{{ loop.index }}" value="{{ project.title }}" required>
+
+                <label>Project {{ loop.index }} - Description</label>
+                <textarea name="project_desc_{{ loop.index }}" required>{{ project.description }}</textarea>
+            </div>
+            {% endfor %}
+
+            <button type="submit">🎯 Generate Cover Letter & Portfolio</button>
+
+        </form>
+    </div>
+
+</body>
+
+</html>
