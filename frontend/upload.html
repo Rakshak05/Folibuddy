@@ -128,7 +128,7 @@
         </form>
 
         <div class="note">
-            <strong>💡 What happens next?</strong><br>
+            <strong>What happens next?</strong><br>
             1. We'll extract your resume information<br>
             2. You can review and edit the details<br>
             3. Generate your cover letter and portfolio
@@ -141,7 +141,7 @@
             const fileNameDiv = document.getElementById('file-name');
 
             if (input.files.length > 0) {
-                fileNameDiv.textContent = '✅ ' + input.files[0].name;
+                fileNameDiv.textContent = input.files[0].name;
                 fileNameDiv.style.color = '#28a745';
             } else {
                 fileNameDiv.textContent = 'No file selected';
@@ -151,6 +151,7 @@
 
         async function handleSubmit(event) {
             event.preventDefault();
+            event.stopPropagation();  // Prevent any bubbling
 
             const fileInput = document.getElementById('resume');
             const submitBtn = document.getElementById('submit-btn');
@@ -160,12 +161,19 @@
                 return;
             }
 
+            // Validate file type
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Please select a PDF file only!');
+                return;
+            }
+
             // Show loading state
             submitBtn.disabled = true;
             submitBtn.textContent = 'Uploading...';
 
             const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            formData.append('file', file);
 
             try {
                 const response = await fetch('/upload-resume-web', {
@@ -176,17 +184,41 @@
                 if (response.ok) {
                     const html = await response.text();
 
-                    // Open the editor page in the same window
-                    const newWindow = window.open('', '_self');
-                    newWindow.document.write(html);
-                    newWindow.document.close();
+                    // Successfully received HTML, display it
+                    submitBtn.textContent = 'Processing...';
+
+                    // Replace current page with editor
+                    document.open();
+                    document.write(html);
+                    document.close();
                 } else {
-                    alert('Error uploading file. Please try again.');
+                    // Server returned an error
+                    const errorText = await response.text().catch(() => 'Unknown error');
+                    console.error('Server error:', errorText);
+
+                    alert('Error reading your resume.\n\n' +
+                        'This could be due to:\n' +
+                        '• Corrupted PDF file\n' +
+                        '• Unsupported PDF format\n' +
+                        '• Large file size\n\n' +
+                        'Please try:\n' +
+                        '1. Re-downloading your PDF\n' +
+                        '2. Converting to a standard PDF format\n' +
+                        '3. Reducing file size\n\n' +
+                        'Then click "Upload & Continue →" to try again.');
+
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Upload & Continue →';
                 }
             } catch (error) {
-                alert('Error connecting to server. Please check if the backend is running.');
+                console.error('Connection error:', error);
+
+                alert('Cannot connect to server!\n\n' +
+                    'Please ensure:\n' +
+                    '1. Backend is running (python -m uvicorn backend.main:app --reload)\n' +
+                    '2. Server is at http://127.0.0.1:8000\n\n' +
+                    'Then click "Upload & Continue →" to try again.');
+
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Upload & Continue →';
             }

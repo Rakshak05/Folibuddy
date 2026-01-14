@@ -123,13 +123,13 @@
 <body>
 
     <div class="container">
-        <h1>✏️ Edit Your Resume Details</h1>
+        <h1>Edit Your Resume Details</h1>
         <p class="subtitle">Review and modify the extracted information before generating your cover letter and
             portfolio.</p>
 
         <form id="resume-form" method="POST" action="/generate">
 
-            <h2>📋 Basic Information</h2>
+            <h2>Basic Information</h2>
             <label>Full Name</label>
             <input type="text" name="name" value="{{ data.name }}" required>
 
@@ -139,28 +139,199 @@
             <label>Phone Number</label>
             <input type="tel" name="phone" value="{{ data.phone }}" required>
 
-            <h2>💡 Skills</h2>
+            <h2>Skills</h2>
             <label>Your Skills (comma separated)</label>
             <textarea name="skills" required>{{ data.skills | join(", ") }}</textarea>
             <div class="skills-hint">Tip: Separate each skill with a comma</div>
 
-            <h2>🚀 Projects</h2>
-            {% for project in data.projects %}
-            <div class="project-block">
-                <label>Project {{ loop.index }} - Title</label>
-                <input type="text" name="project_title_{{ loop.index }}" value="{{ project.title }}" required>
+            <h2>Profile Links</h2>
+            <label>GitHub</label>
+            <input type="url" name="github" value="{{ data.links.github }}">
 
-                <label>Project {{ loop.index }} - Description</label>
-                <textarea name="project_desc_{{ loop.index }}" required>{{ project.description }}</textarea>
+            <label>LinkedIn</label>
+            <input type="url" name="linkedin" value="{{ data.links.linkedin }}">
+
+            <label>LeetCode</label>
+            <input type="url" name="leetcode" value="{{ data.links.leetcode }}">
+
+            <label>Personal Website</label>
+            <input type="url" name="website" value="{{ data.links.website }}">
+
+            <h3>Additional Links</h3>
+            <p class="skills-hint" style="margin-top: -10px;">Add any other links (portfolio, blog, certificates, etc.)
+            </p>
+
+            <div id="custom-links-container">
+                {% for custom_link in data.links.custom %}
+                <div class="custom-link-row"
+                    style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; margin-bottom: 10px; align-items: center;">
+                    <input type="text" name="custom_label_{{ loop.index }}" value="{{ custom_link.label }}"
+                        placeholder="Label (e.g., Portfolio)">
+                    <input type="url" name="custom_url_{{ loop.index }}" value="{{ custom_link.url }}"
+                        placeholder="https://...">
+                    <button type="button" class="remove-link-btn" onclick="removeCustomLink(this)"
+                        style="background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">X</button>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
 
-            <button type="submit" id="submit-btn">🎯 Generate Portfolio</button>
+            <button type="button" onclick="addCustomLink()"
+                style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                + Add Custom Link
+            </button>
+
+            <script>
+                let customLinkCounter = {{ data.links.custom | length }};
+
+                function addCustomLink() {
+                    customLinkCounter++;
+                    const container = document.getElementById('custom-links-container');
+                    const newRow = document.createElement('div');
+                    newRow.className = 'custom-link-row';
+                    newRow.style.cssText = 'display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; margin-bottom: 10px; align-items: center;';
+                    newRow.innerHTML = `
+                        <input type="text" name="custom_label_${customLinkCounter}" placeholder="Label (e.g., Blog)">
+                        <input type="url" name="custom_url_${customLinkCounter}" placeholder="https://...">
+                        <button type="button" class="remove-link-btn" onclick="removeCustomLink(this)" style="background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">✕</button>
+                    `;
+                    container.appendChild(newRow);
+                }
+
+                function removeCustomLink(button) {
+                    button.parentElement.remove();
+                }
+            </script>
+
+            <h2>Projects</h2>
+            <div id="projects-container">
+                {% for project in data.projects %}
+                <div class="project-block" data-project-index="{{ loop.index }}">
+                    <label>Project {{ loop.index }} - Title</label>
+                    <input type="text" name="project_title_{{ loop.index }}" value="{{ project.title }}" required>
+
+                    <label>Project {{ loop.index }} - Repository URL</label>
+                    <input type="url" name="project_repo_{{ loop.index }}" value="{{ project.repo }}"
+                        placeholder="https://github.com/username/repo" class="repo-input">
+
+                    <label>Project {{ loop.index }} - Description</label>
+                    <div style="position: relative;">
+                        <textarea name="project_desc_{{ loop.index }}"
+                            class="project-description">{{ project.description }}</textarea>
+                        <button type="button" class="ai-fill-btn" onclick="fillWithAI({{ loop.index }})"
+                            style="position: absolute; bottom: 8px; right: 8px; background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px; cursor: pointer;">
+                            Let AI fill it
+                        </button>
+                    </div>
+
+                    {% if loop.index > 1 %}
+                    <button type="button" class="remove-project-btn" onclick="removeProject(this)"
+                        style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                        Remove Project
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="addProject()"
+                style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; margin-bottom: 20px;">
+                + Add Project
+            </button>
+
+            <script>
+                let projectCounter = {{ data.projects | length }};
+
+                function addProject() {
+                    projectCounter++;
+                    const container = document.getElementById('projects-container');
+                    const newProject = document.createElement('div');
+                    newProject.className = 'project-block';
+                    newProject.setAttribute('data-project-index', projectCounter);
+                    newProject.innerHTML = `
+                        <label>Project ${projectCounter} - Title</label>
+                        <input type="text" name="project_title_${projectCounter}" placeholder="Project Title" required>
+
+                        <label>Project ${projectCounter} - Repository URL</label>
+                        <input type="url" name="project_repo_${projectCounter}" placeholder="https://github.com/username/repo" class="repo-input">
+
+                        <label>Project ${projectCounter} - Description</label>
+                        <div style="position: relative;">
+                            <textarea name="project_desc_${projectCounter}" class="project-description"></textarea>
+                            <button type="button" class="ai-fill-btn" onclick="fillWithAI(${projectCounter})" style="position: absolute; bottom: 8px; right: 8px; background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px; cursor: pointer;">
+                                Let AI fill it
+                            </button>
+                        </div>
+                        
+                        <button type="button" class="remove-project-btn" onclick="removeProject(this)" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                            Remove Project
+                        </button>
+                    `;
+                    container.appendChild(newProject);
+                }
+
+                function removeProject(button) {
+                    button.parentElement.remove();
+                }
+
+                async function fillWithAI(projectIndex) {
+                    const titleInput = document.querySelector(`input[name="project_title_${projectIndex}"]`);
+                    const repoInput = document.querySelector(`input[name="project_repo_${projectIndex}"]`);
+                    const descTextarea = document.querySelector(`textarea[name="project_desc_${projectIndex}"]`);
+                    const aiButton = document.querySelector(`[data-project-index="${projectIndex}"] .ai-fill-btn`);
+
+                    const title = titleInput.value.trim();
+                    const repo = repoInput.value.trim();
+                    const currentDesc = descTextarea.value.trim();
+
+                    if (!title) {
+                        alert('Please enter a project title first!');
+                        return;
+                    }
+
+                    // Show loading state
+                    const originalText = aiButton.textContent;
+                    aiButton.textContent = 'Generating...';
+                    aiButton.disabled = true;
+
+                    try {
+                        const response = await fetch('/generate-description', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                title: title,
+                                repo_url: repo,
+                                current_description: currentDesc
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            if (data.description) {
+                                descTextarea.value = data.description;
+                            } else if (data.error) {
+                                alert(data.error);
+                            }
+                        } else {
+                            alert(data.error || 'Failed to generate description');
+                        }
+                    } catch (error) {
+                        alert('Error: Could not connect to server. Make sure Ollama is running.');
+                    } finally {
+                        aiButton.textContent = originalText;
+                        aiButton.disabled = false;
+                    }
+                }
+            </script>
+
+            <button type="submit" id="submit-btn">Generate Portfolio</button>
 
         </form>
 
         <div class="success-message" id="success-message">
-            <h3>✅ Portfolio Generated Successfully!</h3>
+            <h3>Portfolio Generated Successfully!</h3>
             <p>Your personal portfolio has been created at:</p>
             <div class="path-display" id="portfolio-path"></div>
             <p><strong>What's next?</strong></p>
@@ -182,7 +353,7 @@
 
             // Show loading state
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ Generating...';
+            submitBtn.textContent = 'Generating...';
 
             const formData = new FormData(this);
 
@@ -203,17 +374,17 @@
                     successMsg.scrollIntoView({ behavior: 'smooth' });
 
                     // Update button
-                    submitBtn.textContent = '✅ Portfolio Generated!';
+                    submitBtn.textContent = 'Portfolio Generated!';
                     submitBtn.style.backgroundColor = '#28a745';
                 } else {
                     alert('Error generating portfolio. Please try again.');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = '🎯 Generate Portfolio';
+                    submitBtn.textContent = 'Generate Portfolio';
                 }
             } catch (error) {
                 alert('Error: ' + error.message);
                 submitBtn.disabled = false;
-                submitBtn.textContent = '🎯 Generate Portfolio';
+                submitBtn.textContent = 'Generate Portfolio';
             }
         });
     </script>

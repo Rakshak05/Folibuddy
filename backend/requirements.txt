@@ -4,3 +4,4 @@ pdfplumber
 requests
 jinja2
 python-multipart
+PyPDF2

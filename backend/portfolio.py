@@ -1,4 +1,5 @@
 from pathlib import Path
+from .llm_generator import generate_about_me, enhance_project_description, check_ollama_available
 
 def format_paragraphs(text):
     return "\n".join(
@@ -13,18 +14,84 @@ def generate_portfolio(resume):
     folder = desktop / "Personal Portfolio"
     folder.mkdir(exist_ok=True)
 
+    # Check if Ollama is available
+    ollama_available = check_ollama_available()
+    
+    # Generate About Me using LLM
+    about_me_text = "This portfolio was automatically generated from my resume."
+    if ollama_available:
+        try:
+            about_me_text = generate_about_me(resume)
+        except Exception as e:
+            print(f"Failed to generate About Me: {e}")
+    
     skills_html = "\n".join(
         f"<li>{skill}</li>" for skill in resume["skills"]
     )
 
+    # Generate projects HTML with proper multi-line descriptions
     projects_html = ""
     for project in resume["projects"]:
+        description = project.get('description', '').strip()
+        repo_url = project.get('repo', '').strip()
+        
+        # ONLY use LLM if description is missing and Ollama is available
+        if not description and ollama_available:
+            try:
+                description = enhance_project_description(
+                    project['title'], 
+                    "",  # Empty description
+                    repo_url  # Pass repo URL for GitHub analysis
+                )
+            except Exception as e:
+                print(f"Failed to generate project description: {e}")
+        
+        # Convert newlines to HTML line breaks for proper display
+        if description:
+            # Replace newlines with <br> tags
+            description_formatted = description.replace('\n', '<br>\n')
+            description_html = f"<p>{description_formatted}</p>"
+        else:
+            description_html = ""
+        
+        # Add repo link if available
+        repo_html = ""
+        if repo_url:
+            repo_html = f"<p><a href='{repo_url}' target='_blank'>Project Repository</a></p>"
+        
         projects_html += f"""
         <div class="project">
             <h3>{project['title']}</h3>
-            <p>{project['description']}</p>
+            {description_html}
+            {repo_html}
         </div>
         """
+
+    # Generate structured profile links HTML
+    links_html = "<ul>\n"
+    icon_map = {
+        "github": "GitHub",
+        "linkedin": "LinkedIn",
+        "leetcode": "LeetCode",
+        "website": "Website"
+    }
+    
+    if resume.get("links"):
+        # Render standard platform links
+        for key in ["github", "linkedin", "leetcode", "website"]:
+            url = resume["links"].get(key, "")
+            if url:
+                label = icon_map.get(key, key.capitalize())
+                links_html += f"        <li><a href='{url}' target='_blank'>{label}</a></li>\n"
+        
+        # Render custom links with user-defined labels
+        for custom_link in resume["links"].get("custom", []):
+            if custom_link.get("url"):
+                label = custom_link.get("label", "Link")
+                url = custom_link["url"]
+                links_html += f"        <li><a href='{url}' target='_blank'>{label}</a></li>\n"
+    
+    links_html += "    </ul>"
 
     index_html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -42,7 +109,7 @@ def generate_portfolio(resume):
 
 <section>
     <h2>About Me</h2>
-    <p>This portfolio was automatically generated from my resume.</p>
+    <p>{about_me_text}</p>
 </section>
 
 <section>
@@ -55,6 +122,11 @@ def generate_portfolio(resume):
 <section>
     <h2>Projects</h2>
     {projects_html}
+</section>
+
+<section>
+    <h2>Links</h2>
+    {links_html if links_html else "<p>No links provided</p>"}
 </section>
 
 <section>
@@ -100,6 +172,19 @@ h2 {
 
 .project {
     margin-top: 16px;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ul {
+    line-height: 1.8;
 }
 """
 
