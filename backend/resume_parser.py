@@ -56,12 +56,12 @@ def extract_text_from_pdf(file):
 
 def normalize_text(text):
     """Clean PDF text while PRESERVING line structure."""
-    # Remove PDF CID garbage
+    # Replace weird PDF garbage
     text = re.sub(r"\(cid:\d+\)", " ", text)
 
-    # Normalize spaces BUT KEEP newlines
+    # Normalize spaces but KEEP newlines
     text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n\s*\n+", "\n\n", text)
+    text = re.sub(r"\n{2,}", "\n", text)
 
     return text.strip()
 
@@ -123,113 +123,6 @@ def extract_skills(text):
     return sorted(found)
 
 
-def extract_projects(text):
-    """Extract projects using line-by-line analysis - truly generic."""
-    projects = []
-
-    text_upper = text.upper()
-
-    # 1️⃣ Locate PROJECTS section
-    start = -1
-    for k in ["PROJECTS", "TECHNICAL PROJECTS", "ACADEMIC PROJECTS"]:
-        idx = text_upper.find(k)
-        if idx != -1:
-            start = idx + len(k)
-            print(f"DEBUG: Found '{k}' at index {idx}")
-            break
-
-    if start == -1:
-        print("DEBUG: No PROJECTS section found")
-        return projects
-
-    # 2️⃣ Find section end
-    end = len(text)
-    for k in ["EXPERIENCE", "EDUCATION", "SKILLS", "CERTIFICATIONS", "PUBLICATIONS"]:
-        idx = text_upper.find(k, start)
-        if idx != -1:
-            end = idx
-            print(f"DEBUG: Section ends at '{k}' (index {idx})")
-            break
-
-    section = text[start:end].strip()
-    print(f"DEBUG: Extracted section ({len(section)} chars)")
-
-    lines = [l.strip() for l in section.split("\n") if l.strip()]
-    print(f"DEBUG: Processing {len(lines)} lines")
-
-    current = None
-
-    for i, line in enumerate(lines):
-        # Bullet detection
-        is_bullet = bool(re.match(r'^[•\-\*●○–]', line))
-
-        # Heuristic: TITLE line
-        looks_like_title = (
-            not is_bullet
-            and len(line) < 120
-            and not line.endswith(".")
-            and not re.search(r'\b(using|with|built|developed|designed)\b', line, re.I)
-        )
-
-        if looks_like_title:
-            # Save previous project
-            if current:
-                projects.append(current)
-                print(f"DEBUG: Saved project '{current['title']}'")
-
-            current = {
-                "title": line,
-                "description": "",
-                "repo": ""
-            }
-            print(f"DEBUG: Started new project: '{line}'")
-        else:
-            if not current:
-                continue
-
-            # Clean bullet symbols
-            clean = re.sub(r'^[•\-\*●○–]\s*', '', line)
-
-            current["description"] += clean + " "
-
-    # Append last project
-    if current:
-        projects.append(current)
-        print(f"DEBUG: Saved last project '{current['title']}'")
-
-    # 3️⃣ Post-process projects
-    final_projects = []
-
-    for p in projects:
-        desc = p["description"].strip()
-
-        # Extract GitHub repo per project
-        repo_match = re.search(r'https?://github\.com/[^\s,)\]]+', desc)
-        if repo_match:
-            p["repo"] = repo_match.group(0)
-
-        # Cleanup title noise
-        title = p["title"]
-        title = re.sub(r'\s*\|\s*.*$', '', title)   # Remove tech stack
-        title = re.sub(r'\s*[-–]\s*\d{4}.*$', '', title)
-        title = title.strip()
-
-        if len(title) < 3:
-            print(f"DEBUG: Skipped short title: '{title}'")
-            continue
-
-        print(f"DEBUG: Final project: '{title}' ({len(desc)} chars)")
-
-        final_projects.append({
-            "title": title,
-            "description": desc,
-            "repo": p["repo"]
-        })
-
-    print(f"DEBUG: Extracted {len(final_projects)} projects total")
-    return final_projects
-
-
 def extract_links(text):
     """Extract links with username inference - works for resumes without full URLs."""
     links = {
@@ -276,10 +169,18 @@ def extract_links(text):
 def parse_resume(text):
     """Parse resume text and extract structured data.
     
+    Uses regex for simple fields, LLM for projects.
+    
     Returns:
         dict: Dictionary containing name, email, phone, skills, projects, and links
     """
-    # Normalize text first
+    from backend.llm_project_extractor import extract_projects_with_llm
+    
+    # Extract projects and research from RAW text (before normalization)
+    # This preserves line breaks and structure for LLM
+    llm_result = extract_projects_with_llm(text)
+    
+    # Normalize text for other extractions
     text = normalize_text(text)
     
     # Debug: Show normalized text sample
@@ -290,6 +191,7 @@ def parse_resume(text):
         "email": extract_email(text),
         "phone": extract_phone(text),
         "skills": extract_skills(text),
-        "projects": extract_projects(text),
+        "projects": llm_result.get("projects", []),
+        "research": llm_result.get("research", []),
         "links": extract_links(text)
     }

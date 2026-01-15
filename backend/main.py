@@ -5,10 +5,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import List
 
-from .resume_parser import extract_text_from_pdf, parse_resume
-from .utils import clean_text
-from .portfolio import generate_portfolio
-from .llm_generator import check_ollama_available, enhance_project_description
+from backend.resume_parser import extract_text_from_pdf, parse_resume
+from backend.utils.formatters import clean_text
+from backend.portfolio import generate_portfolio
+from backend.llm_generator import check_ollama_available, enhance_project_description
 
 app = FastAPI(title="Resume to Portfolio API")
 
@@ -47,33 +47,28 @@ async def upload_resume(file: UploadFile = File(...)):
 
 @app.post("/upload-resume-web", response_class=HTMLResponse)
 async def upload_resume_web(file: UploadFile = File(...)):
-    """Handle web upload - hybrid parsing (regex + LLM for projects)."""
+    """Handle web upload - parse resume and return editor."""
     try:
-        # Extract and normalize text
+        # Extract text from PDF
         text = extract_text_from_pdf(file.file)
         
-        # Use regex parser for basic fields (RELIABLE)
+        # Parse resume (includes LLM project extraction)
         from .resume_parser import parse_resume
         data = parse_resume(text)
         
         print(f"DEBUG: Extracted name: {data.get('name')}")
         print(f"DEBUG: Extracted email: {data.get('email')}")
         print(f"DEBUG: Extracted {len(data.get('skills', []))} skills")
+        print(f"DEBUG: Extracted {len(data.get('projects', []))} projects")
         print(f"DEBUG: Extracted links: {data.get('links')}")
         
-        # Try to use LLM for projects only (SMART)
-        from .llm_projects_parser import extract_projects_with_llm, check_ollama_available
-        
-        if check_ollama_available():
-            print("INFO: Using LLM for project extraction")
-            llm_projects = extract_projects_with_llm(text)
-            if llm_projects:
-                data["projects"] = llm_projects
-                print(f"INFO: LLM extracted {len(llm_projects)} projects")
-            else:
-                print("WARNING: LLM extraction failed, using regex projects")
-        else:
-            print("WARNING: Ollama not available, using regex for projects")
+        # Convert project descriptions to editable text format
+        from .utils.formatters import format_description_text
+        for project in data.get("projects", []):
+            desc = project.get("description", [])
+            if isinstance(desc, list):
+                project["description"] = format_description_text(desc)
+            # If it's already a string, leave it as is
         
         # Render editor
         from fastapi.requests import Request
@@ -137,15 +132,22 @@ async def generate(request: Request):
     # Parse projects from form data with repo URLs
     projects = []
     project_index = 1
+    
+    from .utils.formatters import parse_description_from_text
+    
     while True:
         title_key = f"project_title_{project_index}"
         desc_key = f"project_desc_{project_index}"
         repo_key = f"project_repo_{project_index}"
         
         if title_key in form_data:
+            # Parse description text back to list
+            desc_text = form_data.get(desc_key, "")
+            desc_list = parse_description_from_text(desc_text)
+            
             projects.append({
                 "title": form_data[title_key],
-                "description": form_data.get(desc_key, ""),
+                "description": desc_list,  # Now a list!
                 "repo": form_data.get(repo_key, "")
             })
             project_index += 1
