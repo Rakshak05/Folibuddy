@@ -29,28 +29,37 @@ def generate_portfolio(resume):
         f"<li>{skill}</li>" for skill in resume["skills"]
     )
 
-    # Generate projects HTML with proper multi-line descriptions
+    # Generate projects HTML with proper array-based descriptions
     projects_html = ""
     for project in resume["projects"]:
-        description = project.get('description', '').strip()
-        repo_url = project.get('repo', '').strip()
+        title = project.get("title", "")
+        repo_url = project.get("repo", "").strip()
+        description = project.get("description", [])
+        
+        # Ensure description is always a list
+        if isinstance(description, str):
+            description = [description]
         
         # ONLY use LLM if description is missing and Ollama is available
         if not description and ollama_available:
             try:
-                description = enhance_project_description(
-                    project['title'], 
+                llm_desc = enhance_project_description(
+                    title, 
                     "",  # Empty description
                     repo_url  # Pass repo URL for GitHub analysis
                 )
+                # LLM returns a string, convert to list
+                if llm_desc:
+                    description = [llm_desc]
             except Exception as e:
                 print(f"Failed to generate project description: {e}")
         
-        # Convert newlines to HTML line breaks for proper display
+        # Generate HTML bullets from description array
         if description:
-            # Replace newlines with <br> tags
-            description_formatted = description.replace('\n', '<br>\n')
-            description_html = f"<p>{description_formatted}</p>"
+            description_html = "<ul>"
+            for point in description:
+                description_html += f"<li>{point}</li>"
+            description_html += "</ul>"
         else:
             description_html = ""
         
@@ -61,7 +70,7 @@ def generate_portfolio(resume):
         
         projects_html += f"""
         <div class="project">
-            <h3>{project['title']}</h3>
+            <h3>{title}</h3>
             {description_html}
             {repo_html}
         </div>

@@ -42,9 +42,14 @@
             transition: all 0.3s ease;
         }
 
-        .upload-area:hover {
+        .upload-area:hover,
+        .upload-area.drag-over {
             background-color: #f0f4ff;
             border-color: #764ba2;
+        }
+
+        .upload-area.drag-over {
+            transform: scale(1.02);
         }
 
         .upload-icon {
@@ -117,9 +122,9 @@
         <p class="subtitle">Transform your resume into a professional cover letter and portfolio</p>
 
         <form id="upload-form" onsubmit="handleSubmit(event)">
-            <div class="upload-area" onclick="document.getElementById('resume').click()">
+            <div class="upload-area" id="drop-zone" onclick="document.getElementById('resume').click()">
                 <div class="upload-icon">📤</div>
-                <label for="resume" class="file-label">Choose PDF Resume</label>
+                <label for="resume" class="file-label">Choose or Drag PDF Resume</label>
                 <input type="file" id="resume" name="file" accept=".pdf" onchange="showFileName()">
                 <div class="file-name" id="file-name">No file selected</div>
             </div>
@@ -136,6 +141,29 @@
     </div>
 
     <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('resume');
+
+        // Drag and drop event listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                showFileName();
+            }
+        });
+
         function showFileName() {
             const input = document.getElementById('resume');
             const fileNameDiv = document.getElementById('file-name');

@@ -26,39 +26,114 @@ def normalize_project_text(text: str) -> str:
     return "\n".join(normalized)
 
 
+def is_project_title(line: str) -> bool:
+    """Robust title detection - allows pipes, dates, institutions."""
+    if len(line) < 8:
+        return False
+
+    # must not be a bullet
+    if line.strip().startswith("•"):
+        return False
+
+    # contains letters, not all caps noise
+    if not re.search(r'[a-zA-Z]{4,}', line):
+        return False
+
+    # allow | Supervisor, dates, institutions
+    return True
+
+
+def extract_bullets(lines):
+    """Bullet-safe, PDF-safe extractor."""
+    bullets = []
+    current = ""
+
+    for line in lines:
+        clean = line.strip()
+
+        # New bullet
+        if clean.startswith("•"):
+            if current:
+                bullets.append(current.strip())
+            current = clean.lstrip("• ").strip()
+
+        # Continuation of previous bullet
+        elif current and clean:
+            current += " " + clean
+
+    if current:
+        bullets.append(current.strip())
+
+    return bullets
+
+
+def parse_projects_regex_fallback(projects_text: str):
+    """Regex-based fallback parser with proper bullet continuation."""
+    lines = projects_text.split('\n')
+    
+    projects = []
+    current = None
+    current_lines = []
+
+    for line in lines:
+        # NEW PROJECT TITLE
+        if is_project_title(line):
+            # Save previous project
+            if current:
+                current["description"] = extract_bullets(current_lines)
+                projects.append(current)
+
+            current = {
+                "title": line.strip(),
+                "repo": "",
+                "description": []
+            }
+            current_lines = []
+
+        # Collect lines for current project
+        elif current and line.strip():
+            current_lines.append(line)
+
+    # FLUSH LAST PROJECT
+    if current:
+        current["description"] = extract_bullets(current_lines)
+        projects.append(current)
+    
+    return projects
+
+
 def extract_projects_with_llm(full_text: str):
     """
     Extract ONLY the projects section and send it to LLM.
     """
 
-    # ✅ STEP 1: Find PROJECTS section with better regex
-    text_upper = full_text.upper()
-    
-    match = re.search(r"\n\s*(PROJECTS?|PROJECT EXPERIENCE|ACADEMIC PROJECTS|TECHNICAL PROJECTS)\s*\n", text_upper)
+    # ✅ FIX 1: Detect section headers properly
+    match = re.search(r'PROJECTS(\s*&\s*PUBLICATIONS)?', full_text, re.IGNORECASE)
     if not match:
         print("DEBUG LLM: No PROJECT section found")
         return {"projects": [], "research": []}
 
-    start = match.start()
-    print(f"DEBUG LLM: PROJECT keyword index = {start}")
+    start_idx = match.start()
+    section_text = full_text[start_idx:]
+    
+    print(f"DEBUG LLM: PROJECT keyword index = {start_idx}")
 
     # ✅ STEP 2: Find section end with better keyword matching
     end_keywords = [
         "EDUCATION", "EXPERIENCE", "SKILLS",
         "CERTIFICATIONS", "ACHIEVEMENTS",
-        "PUBLICATIONS", "EXTRA", "AWARDS"
+        "EXTRA", "AWARDS"
     ]
 
-    end = len(full_text)
+    end = len(section_text)
     for k in end_keywords:
-        m = re.search(r"\n\s*" + k + r"\s*\n", text_upper[start+10:])
+        m = re.search(r"\n\s*" + k + r"\s*\n", section_text.upper()[10:])
         if m:
-            end = min(end, start + 10 + m.start())
-            print(f"DEBUG LLM: Found end keyword '{k}' at {start + 10 + m.start()}")
+            end = min(end, 10 + m.start())
+            print(f"DEBUG LLM: Found end keyword '{k}' at {10 + m.start()}")
             break
 
-    # Normalize project text to fix PDF extraction issues
-    projects_text = normalize_project_text(full_text[start:end].strip())
+    projects_text = normalize_project_text(section_text[:end])
 
     print(f"DEBUG LLM: Sending PROJECTS section ({len(projects_text)} chars)")
     print("===== PROJECTS TEXT SENT TO LLM =====")
@@ -149,21 +224,39 @@ TEXT:
             research_raw = result.get("research", [])
             
             # Minimal validation - keep if has title and description
-            projects = [
+            projects_validated = [
                 p for p in projects_raw
                 if p.get("title") and p.get("description")
             ]
             
-            research = [
+            research_validated = [
                 r for r in research_raw
                 if r.get("title") and r.get("description")
             ]
             
-            print(f"✅ Extracted {len(projects)} projects and {len(research)} research papers")
+            # ✅ FIX 3: Separate publications from projects automatically
+            projects_clean = []
+            publications = []
+            
+            for p in projects_validated:
+                title = p["title"].lower()
+                
+                if any(x in title for x in [
+                    "ieee", "transactions", "conference", "journal",
+                    "published", "paper", "publication"
+                ]):
+                    publications.append(p)
+                else:
+                    projects_clean.append(p)
+            
+            # Merge with research from LLM
+            all_research = research_validated + publications
+            
+            print(f"✅ Extracted {len(projects_clean)} projects and {len(all_research)} research papers")
             
             return {
-                "projects": projects,
-                "research": research
+                "projects": projects_clean,
+                "research": all_research
             }
             
         except json.JSONDecodeError as e:

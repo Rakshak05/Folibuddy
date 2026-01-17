@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ name }} | Portfolio</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+
+        <header class="hero">
+            <h1>{{ name }}</h1>
+            <p class="subtitle">AI & ML Engineer</p>
+
+            <div class="links">
+                {% if links.github %}
+                <a href="{{ links.github }}" target="_blank">GitHub</a>
+                {% endif %}
+                {% if links.linkedin %}
+                <a href="{{ links.linkedin }}" target="_blank">LinkedIn</a>
+                {% endif %}
+                {% if links.leetcode %}
+                <a href="{{ links.leetcode }}" target="_blank">LeetCode</a>
+                {% endif %}
+                {% if links.website %}
+                <a href="{{ links.website }}" target="_blank">Website</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <section>
+            <h2>Skills</h2>
+            <div class="skills">
+                {% for skill in skills %}
+                <span class="skill">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section>
+            <h2>Projects</h2>
+
+            {% for project in projects %}
+            <div class="card">
+                <div class="card-header">
+                    <h3>{{ project.title }}</h3>
+                    {% if project.repo %}
+                    <a href="{{ project.repo }}" target="_blank">Repo</a>
+                    {% endif %}
+                </div>
+
+                <ul>
+                    {% for point in project.description %}
+                    <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </section>
+
+        {% if research %}
+        <section>
+            <h2>Research & Publications</h2>
+
+            {% for paper in research %}
+            <div class="card">
+                <h3>{{ paper.title }}</h3>
+                <ul>
+                    {% for point in paper.description %}
+                    <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <footer>
+            <p>{{ email }}{% if phone %} | {{ phone }}{% endif %}</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

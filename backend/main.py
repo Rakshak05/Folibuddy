@@ -8,6 +8,7 @@ from typing import List
 from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
 from backend.portfolio import generate_portfolio
+from backend.portfolio_generator import save_portfolio_data, load_portfolio_data
 from backend.llm_generator import check_ollama_available, enhance_project_description
 
 app = FastAPI(title="Resume to Portfolio API")
@@ -62,13 +63,46 @@ async def upload_resume_web(file: UploadFile = File(...)):
         print(f"DEBUG: Extracted {len(data.get('projects', []))} projects")
         print(f"DEBUG: Extracted links: {data.get('links')}")
         
-        # Convert project descriptions to editable text format
-        from .utils.formatters import format_description_text
+        # STEP 1: Save portfolio data (single source of truth)
+        portfolio_data = {
+            "name": data.get("name", ""),
+            "email": data.get("email", ""),
+            "phone": data.get("phone", ""),
+            "links": data.get("links", {}),
+            "skills": data.get("skills", []),
+            "projects": data.get("projects", []),
+            "research": data.get("research", [])
+        }
+        
+        save_portfolio_data(portfolio_data)
+
+        # SANITY CHECK - Print extracted projects
+        print("\n========== EXTRACTED PROJECTS ==========")
+        for p in portfolio_data.get("projects", []):
+            print(f"\n{p['title']}")
+            for i, d in enumerate(p.get("description", []), 1):
+                print(f"  {i}. {d}")
+        
+        if portfolio_data.get("research"):
+            print("\n========== EXTRACTED RESEARCH ==========")
+            for r in portfolio_data.get("research", []):
+                print(f"\n{r['title']}")
+                for i, d in enumerate(r.get("description", []), 1):
+                    print(f"  {i}. {d}")
+        print("========================================\n")
+        
+        # Convert project descriptions to editable text format for editor
+        from backend.utils.formatters import format_description_text
         for project in data.get("projects", []):
             desc = project.get("description", [])
             if isinstance(desc, list):
                 project["description"] = format_description_text(desc)
-            # If it's already a string, leave it as is
+        
+        for research in data.get("research", []):
+            desc = research.get("description", [])
+            if isinstance(desc, list):
+                research["description"] = format_description_text(desc)
+
         
         # Render editor
         from fastapi.requests import Request
@@ -219,3 +253,21 @@ async def generate_description_endpoint(request: Request):
             status_code=500,
             content={"error": "An error occurred while generating the description"}
         )
+
+
+# STEP 4: Portfolio render endpoint
+@app.get("/portfolio", response_class=HTMLResponse)
+async def view_portfolio(request: Request):
+    """Render portfolio HTML from saved JSON data."""
+    data = load_portfolio_data()
+
+    if not data:
+        return HTMLResponse("<h2>No portfolio generated yet. Please upload a resume first.</h2>")
+
+    return templates.TemplateResponse(
+        "portfolio.html",
+        {
+            "request": request,
+            **data
+        }
+    )
