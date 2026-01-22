@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ name }} | Developer & Creative</title>
+    <meta name="description" content="Portfolio of {{ name }} - Developer, Creative, and Tech Enthusiast" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="/static/template-style.css" />
+</head>
+
+<body>
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+        <a href="#hero" class="nav-dot" aria-label="Home"></a>
+        <a href="#expertise" class="nav-dot" aria-label="Expertise"></a>
+        <a href="#projects" class="nav-dot" aria-label="Projects"></a>
+        <a href="#experience" class="nav-dot" aria-label="Experience"></a>
+        <a href="#contact" class="nav-dot" aria-label="Contact"></a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-greeting">Hey, I'm {{ name }}</h1>
+                {% if headline %}
+                <p class="hero-tagline">{{ headline }}</p>
+                {% endif %}
+                {% if about %}
+                <p class="hero-description">{{ about }}</p>
+                {% endif %}
+
+                <div class="hero-buttons">
+                    <a href="#projects" class="btn btn-primary">View My Work</a>
+                    <a href="#contact" class="btn btn-outline">Get in Touch</a>
+                </div>
+
+                {% if links.github or links.linkedin %}
+                <div class="social-links">
+                    {% if links.github %}
+                    <a href="{{ links.github }}" target="_blank" class="social-link" aria-label="GitHub">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                    {% if links.linkedin %}
+                    <a href="{{ links.linkedin }}" target="_blank" class="social-link" aria-label="LinkedIn">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Expertise Section -->
+    {% if skills %}
+    <section id="expertise" class="expertise-section">
+        <div class="container">
+            <h2 class="section-title">Technical Expertise</h2>
+            <div class="expertise-grid">
+                {% for skill in skills %}
+                <div class="expertise-card">
+                    <div class="expertise-icon">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                    </div>
+                    <h3 class="expertise-title">{{ skill }}</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Projects Section -->
+    {% if projects %}
+    <section id="projects" class="projects-section">
+        <div class="container">
+            <h2 class="section-title">Featured Projects</h2>
+            <div class="projects-grid">
+                {% for project in projects %}
+                <div class="project-card">
+                    <div class="project-icon">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                    </div>
+
+                    <h3 class="project-title">{{ project.title }}</h3>
+
+                    {% if project.description %}
+                    <ul class="project-description">
+                        {% for desc in project.description %}
+                        <li>{{ desc }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    <!-- Technology Pills -->
+                    <div class="tech-pills">
+                        <span class="tech-pill">Project</span>
+                    </div>
+
+                    <!-- Project Links -->
+                    <div class="project-links">
+                        {% if project.repo %}
+                        <a href="{{ project.repo }}" target="_blank" class="project-link">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                            </svg>
+                            View Code
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Research Section (if applicable) -->
+    {% if research %}
+    <section id="research" class="research-section">
+        <div class="container">
+            <h2 class="section-title">Research & Publications</h2>
+            <div class="projects-grid">
+                {% for item in research %}
+                <div class="project-card">
+                    <div class="project-icon">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+
+                    <h3 class="project-title">{{ item.title }}</h3>
+
+                    {% if item.description %}
+                    <ul class="project-description">
+                        {% for desc in item.description %}
+                        <li>{{ desc }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    <div class="tech-pills">
+                        <span class="tech-pill">Research</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Experience Section -->
+    {% if experience %}
+    <section id="experience" class="experience-section">
+        <div class="container">
+            <h2 class="section-title">Professional Experience</h2>
+            <div class="timeline">
+                {% for exp in experience %}
+                <div class="timeline-item {% if loop.index is even %}timeline-right{% else %}timeline-left{% endif %}">
+                    <div class="timeline-card">
+                        <div class="timeline-content">
+                            <h3 class="experience-role">{{ exp.role }}</h3>
+                            <p class="experience-company">{{ exp.company }}</p>
+                            <p class="experience-duration">{{ exp.from }} - {{ exp.to }}</p>
+
+                            {% if exp.description %}
+                            <ul class="experience-description">
+                                {% for desc in exp.description %}
+                                <li>{{ desc }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+
+                            {% if exp.skills %}
+                            <div class="tech-pills">
+                                {% for skill in exp.skills %}
+                                <span class="tech-pill">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title">Get in Touch</h2>
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info">
+                    {% if email %}
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="contact-label">Email</p>
+                            <a href="mailto:{{ email }}" class="contact-value">{{ email }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if phone %}
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="contact-label">Phone</p>
+                            <a href="tel:{{ phone }}" class="contact-value">{{ phone }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if links.linkedin %}
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="contact-label">LinkedIn</p>
+                            <a href="{{ links.linkedin }}" target="_blank" class="contact-value">Connect with me</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Contact Form Placeholder -->
+                <div class="contact-form-area">
+                    <p class="contact-message">Feel free to reach out via email or connect with me on social media!</p>
+                    <div class="social-links-contact">
+                        {% if links.github %}
+                        <a href="{{ links.github }}" target="_blank" class="btn btn-outline btn-small">GitHub</a>
+                        {% endif %}
+                        {% if links.linkedin %}
+                        <a href="{{ links.linkedin }}" target="_blank" class="btn btn-outline btn-small">LinkedIn</a>
+                        {% endif %}
+                        {% if links.leetcode %}
+                        <a href="{{ links.leetcode }}" target="_blank" class="btn btn-outline btn-small">LeetCode</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© {{ name }} • Built with Folibuddy</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Active nav dot highlighting
+        const sections = document.querySelectorAll('section[id]');
+        const navDots = document.querySelectorAll('.nav-dot');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navDots.forEach(dot => {
+                dot.classList.remove('active');
+                if (dot.getAttribute('href') === `#${current}`) {
+                    dot.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

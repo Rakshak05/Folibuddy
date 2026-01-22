@@ -99,18 +99,13 @@ def extract_phone(text):
 
 def extract_skills(text):
     """Extract skills by matching against a known vocabulary.
-    
     This is deliberately simple - accuracy first, sophistication later.
     """
     KNOWN_SKILLS = [
-        "Python", "C", "C++", "Java", "Kotlin", "JavaScript",
-        "HTML", "CSS", "MongoDB", "SQL",
-        "TensorFlow", "PyTorch", "Scikit-Learn",
-        "Pandas", "NumPy", "Matplotlib",
-        "React", "Nest.js", "FastAPI",
-        "Firebase", "Git", "Docker",
-        "Machine Learning", "Deep Learning",
-        "LLM", "NLP"
+        "Python", "C", "C++", "Java", "Kotlin", "JavaScript", "HTML", "CSS", "MongoDB", 
+        "SQL", "TensorFlow", "PyTorch", "Scikit-Learn", "Pandas", "NumPy", "Matplotlib", 
+        "React", "Nest.js", "FastAPI", "Firebase", "Git", "Docker", "Machine Learning", 
+        "Deep Learning", "LLM", "NLP"
     ]
 
     found = set()
@@ -183,15 +178,13 @@ def parse_resume(text):
     # Normalize text for other extractions
     text = normalize_text(text)
     
-    # Debug: Show normalized text sample
-    print(f"DEBUG NORMALIZED TEXT SAMPLE: {text[:500]}")
-    
     return {
         "name": extract_name(text),
         "email": extract_email(text),
         "phone": extract_phone(text),
         "skills": extract_skills(text),
         "projects": llm_result.get("projects", []),
+        "experience": llm_result.get("experience", []), 
         "research": llm_result.get("research", []),
         "links": extract_links(text)
     }

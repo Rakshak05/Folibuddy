@@ -5,8 +5,27 @@ import re
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
+def fix_json_errors(json_str: str) -> str:
+    """Fix common JSON errors from LLM output."""
+    # Remove trailing commas before closing braces/brackets
+    json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+    
+    # Remove any markdown code blocks if present
+    json_str = re.sub(r'^```json\s*', '', json_str, flags=re.MULTILINE)
+    json_str = re.sub(r'^```\s*$', '', json_str, flags=re.MULTILINE)
+    
+    return json_str.strip()
+
+
 def normalize_project_text(text: str) -> str:
     """Normalize project text to fix PDF extraction issues."""
+    # Merge lines that start with lowercase (continuation lines)
+    text = re.sub(r'\n(?=[a-z])', ' ', text)
+    
+    # Collapse multiple spaces
+    text = re.sub(r'\s{2,}', ' ', text)
+    
+    # Clean up lines
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     normalized = []
     prev_was_bullet = False
@@ -27,19 +46,25 @@ def normalize_project_text(text: str) -> str:
 
 
 def is_project_title(line: str) -> bool:
-    """Robust title detection - allows pipes, dates, institutions."""
-    if len(line) < 8:
+    """Strict title detection - prevents wrapped descriptions from being detected as titles."""
+    line = line.strip()
+
+    # Not a bullet
+    if line.startswith(("•", "-", "*")):
         return False
 
-    # must not be a bullet
-    if line.strip().startswith("•"):
+    # Reject very long lines (likely descriptions)
+    if len(line) > 80:
         return False
 
-    # contains letters, not all caps noise
-    if not re.search(r'[a-zA-Z]{4,}', line):
+    # Reject lines with action verbs (likely descriptions)
+    if re.search(r'\b(built|developed|implemented|designed|created|published|evaluated|integrated|leveraging|aiding|focusing|experimenting|building)\b', line, re.I):
         return False
 
-    # allow | Supervisor, dates, institutions
+    # Must contain letters
+    if not re.search(r'[A-Za-z]{3,}', line):
+        return False
+
     return True
 
 
@@ -76,7 +101,7 @@ def parse_projects_regex_fallback(projects_text: str):
     current_lines = []
 
     for line in lines:
-        # NEW PROJECT TITLE
+        # NEW PROJECT TITLE (strict detection now)
         if is_project_title(line):
             # Save previous project
             if current:
@@ -90,8 +115,8 @@ def parse_projects_regex_fallback(projects_text: str):
             }
             current_lines = []
 
-        # Collect lines for current project
-        elif current and line.strip():
+        # Collect ALL lines for current project (no strip checks)
+        elif current:
             current_lines.append(line)
 
     # FLUSH LAST PROJECT
@@ -104,25 +129,33 @@ def parse_projects_regex_fallback(projects_text: str):
 
 def extract_projects_with_llm(full_text: str):
     """
-    Extract ONLY the projects section and send it to LLM.
+    Extract projects, research, and experience sections and send to LLM.
     """
 
-    # ✅ FIX 1: Detect section headers properly
-    match = re.search(r'PROJECTS(\s*&\s*PUBLICATIONS)?', full_text, re.IGNORECASE)
-    if not match:
-        print("DEBUG LLM: No PROJECT section found")
-        return {"projects": [], "research": []}
-
-    start_idx = match.start()
-    section_text = full_text[start_idx:]
+    # ✅ FIX 1: Detect PROJECTS or EXPERIENCE sections
+    projects_match = re.search(r'PROJECTS(\s*&\s*PUBLICATIONS)?', full_text, re.IGNORECASE)
+    experience_match = re.search(r'EXPERIENCE', full_text, re.IGNORECASE)
     
-    print(f"DEBUG LLM: PROJECT keyword index = {start_idx}")
+    if not projects_match and not experience_match:
+        print("DEBUG LLM: No PROJECTS or EXPERIENCE section found")
+        return {"projects": [], "research": [], "experience": []}
 
-    # ✅ STEP 2: Find section end with better keyword matching
+    # Find the earliest section start
+    start_idx = float('inf')
+    if projects_match:
+        start_idx = min(start_idx, projects_match.start())
+        print(f"DEBUG LLM: PROJECTS keyword index = {projects_match.start()}")
+    if experience_match:
+        start_idx = min(start_idx, experience_match.start())
+        print(f"DEBUG LLM: EXPERIENCE keyword index = {experience_match.start()}")
+    
+    section_text = full_text[int(start_idx):]
+    
+    # ✅ STEP 2: Find section end (after both PROJECTS and EXPERIENCE)
     end_keywords = [
-        "EDUCATION", "EXPERIENCE", "SKILLS",
+        "EDUCATION", "SKILLS",
         "CERTIFICATIONS", "ACHIEVEMENTS",
-        "EXTRA", "AWARDS"
+        "EXTRA", "AWARDS", "REFERENCES"
     ]
 
     end = len(section_text)
@@ -133,24 +166,34 @@ def extract_projects_with_llm(full_text: str):
             print(f"DEBUG LLM: Found end keyword '{k}' at {10 + m.start()}")
             break
 
-    projects_text = normalize_project_text(section_text[:end])
+    combined_text = normalize_project_text(section_text[:end])
 
-    print(f"DEBUG LLM: Sending PROJECTS section ({len(projects_text)} chars)")
-    print("===== PROJECTS TEXT SENT TO LLM =====")
-    print(projects_text[:500])  # Show first 500 chars
-    print("====================================")
+    # print(f"DEBUG LLM: Sending PROJECTS+EXPERIENCE sections ({len(combined_text)} chars)")
+    # print("===== TEXT SENT TO LLM =====")
+    # print(combined_text[:500])  # Show first 500 chars
+    # print("====================================")
 
 
-    # ✅ FIX 2: Make the prompt LLM-proof with projects/research split
+    # ✅ IMPROVED PROMPT: LLM as cleaner/enhancer, not parser
     prompt = f"""
-You are a resume parser.
+You are given PRE-EXTRACTED resume content.
 
 Your task:
-Extract ALL projects and research papers from the text.
+- CLEAN and IMPROVE the descriptions
+- Fix grammar and clarity
+- Classify each item into ONE type: "project", "research", or "experience"
 
-You must classify each item into ONE of two types:
-- "project" → software, apps, systems, tools, internships
-- "research" → papers, publications, book chapters
+CRITICAL RULES:
+- DO NOT remove any content
+- DO NOT merge items
+- DO NOT split items
+- DO NOT invent data
+- Return items in the SAME structure you received
+
+Classification guide:
+- "project" → software, apps, systems, tools, personal/academic projects
+- "research" → papers, publications, book chapters, conference papers
+- "experience" → internships, jobs, work experience (company-based roles)
 
 Return JSON in this exact format:
 
@@ -167,19 +210,29 @@ Return JSON in this exact format:
       "title": "",
       "description": ["", ""]
     }}
+  ],
+  "experience": [
+    {{
+      "company": "",
+      "role": "",
+      "from": "",
+      "to": "",
+      "description": ["", ""],
+      "skills": ["", ""]
+    }}
   ]
 }}
 
 Rules:
 - Research items must NEVER appear inside "projects"
-- Projects may have repos, research must not
+- Internships and jobs go into "experience", not "projects"
+- For experience: extract company, role, dates, responsibilities, and skills used
+- Projects may have repos, research and experience must not
 - Do not invent data
-- Output ONLY JSON
-- No text before or after
-- No markdown
+- Output ONLY JSON (no text before or after, no markdown)
 
 TEXT:
-{projects_text}
+{combined_text}
 """
 
     payload = {
@@ -208,20 +261,29 @@ TEXT:
 
         if not json_match:
             print("ERROR LLM: No JSON object found")
-            return {"projects": [], "research": []}
+            return {"projects": [], "research": [], "experience": []}
 
         try:
-            result = json.loads(json_match.group(0))
+            # Clean the JSON string before parsing
+            json_str = json_match.group(0)
+            json_str = fix_json_errors(json_str)
+            
+            print("===== CLEANED JSON =====")
+            print(json_str[:500])
+            print("========================")
+            
+            result = json.loads(json_str)
             
             # Validate structure
             if not isinstance(result, dict):
                 print("ERROR LLM: Response is not an object")
-                return {"projects": [], "research": []}
+                return {"projects": [], "research": [], "experience": []}
             
             # ✅ NEW RULE: Keep project if it has title and description
             # Don't reject internships or single-bullet projects
             projects_raw = result.get("projects", [])
             research_raw = result.get("research", [])
+            experience_raw = result.get("experience", [])  # Extract experience
             
             # Minimal validation - keep if has title and description
             projects_validated = [
@@ -232,6 +294,12 @@ TEXT:
             research_validated = [
                 r for r in research_raw
                 if r.get("title") and r.get("description")
+            ]
+            
+            # Validate experience - need company, role, and description
+            experience_validated = [
+                e for e in experience_raw
+                if e.get("company") and e.get("role") and e.get("description")
             ]
             
             # ✅ FIX 3: Separate publications from projects automatically
@@ -252,20 +320,22 @@ TEXT:
             # Merge with research from LLM
             all_research = research_validated + publications
             
-            print(f"✅ Extracted {len(projects_clean)} projects and {len(all_research)} research papers")
+            print(f"Extracted {len(projects_clean)} projects, {len(all_research)} research papers, and {len(experience_validated)} experiences")
+            
             
             return {
                 "projects": projects_clean,
-                "research": all_research
+                "research": all_research,
+                "experience": experience_validated  # Return experience
             }
             
         except json.JSONDecodeError as e:
             print("ERROR LLM JSON:", e)
-            return {"projects": [], "research": []}
+            return {"projects": [], "research": [], "experience": []}
 
     except Exception as e:
         print(f"ERROR LLM: {e}")
-        return []
+        return {"projects": [], "research": [], "experience": []}
 
 
 def check_ollama_available():

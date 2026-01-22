@@ -127,7 +127,7 @@
         <p class="subtitle">Review and modify the extracted information before generating your cover letter and
             portfolio.</p>
 
-        <form id="resume-form" method="POST" action="/generate">
+        <form id="resume-form" method="POST" action="/generate" enctype="multipart/form-data">
 
             <h2>Basic Information</h2>
             <label>Full Name</label>
@@ -138,6 +138,28 @@
 
             <label>Phone Number</label>
             <input type="tel" name="phone" value="{{ data.phone }}" required>
+
+            <label>Professional Headline</label>
+            <input type="text" name="headline" value="{{ data.headline or '' }}"
+                placeholder="e.g., AI & ML Engineer | Full Stack Developer">
+            <div class="skills-hint">A short tagline that describes your professional identity</div>
+
+            <label>About Me</label>
+            <textarea name="about"
+                placeholder="Write a brief introduction about yourself, your interests, and what you're passionate about...">{{ data.about or '' }}</textarea>
+            <div class="skills-hint">A short bio that will appear in your portfolio</div>
+
+            <h2>Profile Image (Optional)</h2>
+            <label>Upload Profile Picture</label>
+            <input type="file" name="profile_image" id="profile_image"
+                accept="image/png, image/jpeg, image/jpg, image/webp">
+            <div class="skills-hint">Upload a profile picture to use the premium WorkFolio template. Accepted formats:
+                PNG, JPG, JPEG, WEBP</div>
+
+            <div id="image-preview" style="margin-top: 10px; margin-bottom: 20px; display: none;">
+                <img id="preview-img"
+                    style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #007bff;">
+            </div>
 
             <h2>Skills</h2>
             <label>Your Skills (comma separated)</label>
@@ -326,6 +348,110 @@
                 }
             </script>
 
+            <h2>Professional Experience</h2>
+            <p class="skills-hint" style="margin-top: -10px; margin-bottom: 20px;">Add your work experience (newest to
+                oldest)</p>
+            <div id="experience-container">
+                {% for exp in data.experience %}
+                <div class="project-block" data-experience-index="{{ loop.index }}">
+                    <label>Experience {{ loop.index }} - Company</label>
+                    <input type="text" name="exp_company_{{ loop.index }}" value="{{ exp.company }}"
+                        placeholder="e.g., Google, Microsoft" required>
+
+                    <label>Experience {{ loop.index }} - Role/Position</label>
+                    <input type="text" name="exp_role_{{ loop.index }}" value="{{ exp.role }}"
+                        placeholder="e.g., Software Engineer" required>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>From</label>
+                            <input type="text" name="exp_from_{{ loop.index }}" value="{{ exp.from }}"
+                                placeholder="e.g., Jan 2022" required>
+                        </div>
+                        <div>
+                            <label>To</label>
+                            <input type="text" name="exp_to_{{ loop.index }}" value="{{ exp.to or 'Present' }}"
+                                placeholder="e.g., Present" required>
+                        </div>
+                    </div>
+
+                    <label>Responsibilities & Achievements</label>
+                    <textarea name="exp_desc_{{ loop.index }}"
+                        placeholder="One responsibility per line&#10;e.g., Built scalable web applications&#10;Led team of 5 developers&#10;Increased performance by 40%"
+                        style="min-height: 100px;">{{ exp.description }}</textarea>
+                    <div class="skills-hint" style="margin-top: -10px;">One point per line</div>
+
+                    <label>Skills/Technologies Used (optional)</label>
+                    <input type="text" name="exp_skills_{{ loop.index }}"
+                        value="{{ exp.skills | join(', ') if exp.skills else '' }}"
+                        placeholder="e.g., React, Python, AWS (comma-separated)">
+
+                    {% if loop.index > 1 or (data.experience | length) == 0 %}
+                    <button type="button" class="remove-experience-btn" onclick="removeExperience(this)"
+                        style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                        Remove Experience
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="addExperience()"
+                style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; margin-bottom: 20px;">
+                + Add Experience
+            </button>
+
+            <script>
+                let experienceCounter = {{ data.experience | length }};
+
+                function addExperience() {
+                    experienceCounter++;
+                    const container = document.getElementById('experience-container');
+                    const newExperience = document.createElement('div');
+                    newExperience.className = 'project-block';
+                    newExperience.setAttribute('data-experience-index', experienceCounter);
+                    newExperience.innerHTML = `
+                        <label>Experience ${experienceCounter} - Company</label>
+                        <input type="text" name="exp_company_${experienceCounter}" placeholder="e.g., Google, Microsoft" required>
+
+                        <label>Experience ${experienceCounter} - Role/Position</label>
+                        <input type="text" name="exp_role_${experienceCounter}" placeholder="e.g., Software Engineer" required>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label>From</label>
+                                <input type="text" name="exp_from_${experienceCounter}" placeholder="e.g., Jan 2022" required>
+                            </div>
+                            <div>
+                                <label>To</label>
+                                <input type="text" name="exp_to_${experienceCounter}" placeholder="e.g., Present" required>
+                            </div>
+                        </div>
+
+                        <label>Responsibilities & Achievements</label>
+                        <textarea name="exp_desc_${experienceCounter}" placeholder="One responsibility per line&#10;e.g., Built scalable web applications&#10;Led team of 5 developers&#10;Increased performance by 40%" style="min-height: 100px;"></textarea>
+                        <div class="skills-hint" style="margin-top: -10px;">One point per line</div>
+
+                        <label>Skills/Technologies Used (optional)</label>
+                        <input type="text" name="exp_skills_${experienceCounter}" placeholder="e.g., React, Python, AWS (comma-separated)">
+
+                        <button type="button" class="remove-experience-btn" onclick="removeExperience(this)" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                            Remove Experience
+                        </button>
+                    `;
+                    container.appendChild(newExperience);
+                }
+
+                function removeExperience(button) {
+                    button.parentElement.remove();
+                }
+
+                // Only add one experience field by default if none were extracted
+                if (experienceCounter === 0) {
+                    addExperience();
+                }
+            </script>
+
             <button type="submit" id="submit-btn">Generate Portfolio</button>
 
         </form>
@@ -345,6 +471,21 @@
     </div>
 
     <script>
+        // Profile image preview
+        document.getElementById('profile_image').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('image-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('image-preview').style.display = 'none';
+            }
+        });
+
         document.getElementById('resume-form').addEventListener('submit', async function (event) {
             event.preventDefault();
 
