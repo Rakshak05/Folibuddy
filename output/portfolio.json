@@ -1,0 +1,48 @@
+{
+  "name": "Rahasya Barkur Sheher",
+  "email": "barkurrahasya@gmail.com",
+  "phone": "4134660747",
+  "links": {
+    "github": "https://github.com/RAHASYABARKUR",
+    "linkedin": "https://www.linkedin.com/in/rahasya/",
+    "leetcode": "",
+    "website": "",
+    "custom": [
+      {
+        "label": "ieeexplore.ieee.org",
+        "url": "https://ieeexplore.ieee.org/document/10004200"
+      },
+      {
+        "label": "ieeexplore.ieee.org",
+        "url": "https://ieeexplore.ieee.org/document/10004200"
+      },
+      {
+        "label": "ieeexplore.ieee.org",
+        "url": "https://ieeexplore.ieee.org/document/9865696"
+      }
+    ]
+  },
+  "skills": [
+    "C",
+    "C++",
+    "Deep Learning",
+    "Docker",
+    "Git",
+    "Java",
+    "LLM",
+    "Machine Learning",
+    "Matplotlib",
+    "MongoDB",
+    "NLP",
+    "NumPy",
+    "Pandas",
+    "PyTorch",
+    "Python",
+    "SQL",
+    "TensorFlow"
+  ],
+  "projects": [],
+  "experience": [],
+  "research": [],
+  "profile_image": null
+}
