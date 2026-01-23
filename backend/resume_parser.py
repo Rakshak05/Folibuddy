@@ -1,5 +1,8 @@
 import pdfplumber
 import re
+import os
+
+USE_GEMINI = os.getenv("USE_GEMINI", "true").lower() == "true"
 
 
 def extract_text_from_pdf(file):
@@ -164,27 +167,48 @@ def extract_links(text):
 def parse_resume(text):
     """Parse resume text and extract structured data.
     
-    Uses regex for simple fields, LLM for projects.
+    Uses Gemini API (if enabled) or falls back to LLM for projects.
     
     Returns:
         dict: Dictionary containing name, email, phone, skills, projects, and links
     """
+    
+    if USE_GEMINI:
+        # ✅ Use Gemini for full structured extraction
+        try:
+            from backend.llm_gemini_parser import parse_resume_gemini
+            
+            print("🔵 Using Gemini API for resume parsing...")
+            result = parse_resume_gemini(text)
+            
+            # Gemini returns everything, we're done!
+            print(f"✅ Gemini parsed: {result.get('name', 'Unknown')}")
+            return result
+            
+        except Exception as e:
+            print(f"⚠️ Gemini failed: {e}")
+            print("Falling back to old LLM parser...")
+            # Fall through to old parser
+    
+    # ✅ Old LLM parser (for projects/experience/research only)
     from backend.llm_project_extractor import extract_projects_with_llm
+    
+    print("🟡 Using old LLM parser...")
     
     # Extract projects and research from RAW text (before normalization)
     # This preserves line breaks and structure for LLM
     llm_result = extract_projects_with_llm(text)
     
     # Normalize text for other extractions
-    text = normalize_text(text)
+    normalized_text = normalize_text(text)
     
     return {
-        "name": extract_name(text),
-        "email": extract_email(text),
-        "phone": extract_phone(text),
-        "skills": extract_skills(text),
+        "name": extract_name(normalized_text),
+        "email": extract_email(normalized_text),
+        "phone": extract_phone(normalized_text),
+        "skills": extract_skills(normalized_text),
         "projects": llm_result.get("projects", []),
         "experience": llm_result.get("experience", []), 
         "research": llm_result.get("research", []),
-        "links": extract_links(text)
+        "links": extract_links(normalized_text)
     }

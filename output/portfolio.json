@@ -1,5 +1,5 @@
 {
-  "name": "Rahasya Barkur Sheher",
+  "name": "Rahasya Barkur",
   "email": "barkurrahasya@gmail.com",
   "phone": "4134660747",
   "links": {
@@ -7,42 +7,138 @@
     "linkedin": "https://www.linkedin.com/in/rahasya/",
     "leetcode": "",
     "website": "",
-    "custom": [
-      {
-        "label": "ieeexplore.ieee.org",
-        "url": "https://ieeexplore.ieee.org/document/10004200"
-      },
-      {
-        "label": "ieeexplore.ieee.org",
-        "url": "https://ieeexplore.ieee.org/document/10004200"
-      },
-      {
-        "label": "ieeexplore.ieee.org",
-        "url": "https://ieeexplore.ieee.org/document/9865696"
-      }
-    ]
+    "custom": []
   },
   "skills": [
-    "C",
-    "C++",
-    "Deep Learning",
-    "Docker",
-    "Git",
-    "Java",
-    "LLM",
-    "Machine Learning",
-    "Matplotlib",
-    "MongoDB",
-    "NLP",
-    "NumPy",
-    "Pandas",
-    "PyTorch",
     "Python",
     "SQL",
-    "TensorFlow"
+    "Java",
+    "Scala",
+    "C++",
+    "C",
+    "Pandas",
+    "Keras",
+    "Numpy",
+    "Tensorflow",
+    "Pytorch",
+    "Open CV",
+    "Scikit - Learn",
+    "MatplotLib",
+    "PySpark",
+    "Kafka",
+    "Hadoop",
+    "Hive",
+    "Git",
+    "LightSpeed",
+    "Docker",
+    "Jenkins",
+    "OpenShift",
+    "UDeploy",
+    "AbInitio",
+    "Talend",
+    "Oracle SQL Developer",
+    "MongoDB",
+    "UNIX",
+    "Maven",
+    "SpringBoot"
   ],
-  "projects": [],
-  "experience": [],
-  "research": [],
+  "projects": [
+    {
+      "title": "GeoLocator",
+      "description": [
+        "Implemented an end-to-end application leveraging this model to extract location from image evidence without metadata, aiding law enforcement in assigning jurisdiction.",
+        "Enhanced the open-source GeoCLIP model by detecting scripts and their associated countries in images using CLIP embeddings and web-scraped information, improving country accuracy detection by 20%."
+      ],
+      "technologies": [
+        "CLIP embeddings",
+        "GeoCLIP model"
+      ],
+      "repo": ""
+    },
+    {
+      "title": "Spaghetti Sniffer",
+      "description": [
+        "Participated in HackUmass 2024, a 30-hour hackathon to Build, a VS code extension, Spaghetti Sniffer. This highlight poorly written code sarcastically developed using Ollama an LLM, backed by graph algorithms on Abstract Syntax Tree."
+      ],
+      "technologies": [
+        "Ollama",
+        "LLM",
+        "Abstract Syntax Tree"
+      ],
+      "repo": ""
+    }
+  ],
+  "experience": [
+    {
+      "company": "Citi India",
+      "role": "Data Engineer",
+      "from": "Jul’21",
+      "to": "Aug’24",
+      "description": [
+        "Developed and deployed a Streaming PySpark Scala application enabling clients to retrieve on-demand billing statements",
+        "Designed a snowflake-type data warehousing schema to streamline cash transaction processing across multiple sources and downstream applications, optimizing data flow and improving analytics query performance",
+        "Coordinated database development with optimized indexing based on backend service requirements, reducing response time for the recap reconciliation web application from 4–5 minutes to under 1 minute.",
+        "Streamlined system upgrades, cloud integration, and Kafka migration, Oracle DB 11G to 19C, Hadoop, facilitating a full transition away from legacy tools (e.g., TeamCity, Confluent, UDeploy)."
+      ],
+      "skills": [
+        "PySpark",
+        "Scala",
+        "Kafka",
+        "Hadoop"
+      ]
+    },
+    {
+      "company": "Citi India",
+      "role": "Natural Language Processing Intern",
+      "from": "May’20",
+      "to": "Jun’20",
+      "description": [
+        "Automated insights extraction from Earnings Call Recordings using advanced NLP algorithms, saving 120+ analyst hours monthly and expediting report generation"
+      ],
+      "skills": [
+        "NLP"
+      ]
+    },
+    {
+      "company": "NITK India",
+      "role": "Machine Learning Intern",
+      "from": "May’19",
+      "to": "Jul’19",
+      "description": [
+        "Applied U-Net model for segmentation of malignant and benign cells from hospital-provided samples, integrating a user-friendly GUI for streamlined labeling by medical professionals."
+      ],
+      "skills": [
+        "U-Net model"
+      ]
+    }
+  ],
+  "research": [
+    {
+      "title": "Evaluating Object Counting in Multimodal Video-LLMs",
+      "description": [
+        "CreatedVisCount,abenchmarkdatasetforevaluatingobjectcountingabilitiesofMultiModal-LLMs,inimagesandvideos",
+        "Conducted comprehensive evaluations of open-source and commercial Video-LLMs, revealing significant inefficiencies due to model biases, and tendencies to use vague descriptors like ”several” or ”multiple.”"
+      ],
+      "publication": ""
+    },
+    {
+      "title": "Land Cover Change Segmentation from Satellite Images",
+      "description": [
+        "Published in IEEE Transactions on Emerging Topics in Computational Intelligence: RSCDNet: A robust Deep learning architecture for change detection from bi-temporal high-resolution remote sensing images.",
+        "Assembled an encoder-decoder neural network architecture with novel attention modules to generate binary change maps from bi-temporal images, achieving a 12% improvement in F1 score over state-of-the-art models at the time.",
+        "Further extension to the work was carried on bi-temporal multispectral images having 13 bands utilised and hyperspectral images having 198 bands. Abundance mapping estimation using hyperspectral unmixing was utilised to reduce computation costs.",
+        "Improved the binary change detection model with a knowledge distillation approach to additionally identify land-cover categories of the changed area, achieving a mean accuracy of 85% on the SECOND dataset"
+      ],
+      "publication": "IEEE Transactions on Emerging Topics in Computational Intelligence"
+    },
+    {
+      "title": "Speech Emotion Recognition",
+      "description": [
+        "Published EnsembleWave An ensembled approach for Automatic Speech Emotion Recognition, as part of IEEE CONECCT 2022 Conference on Electronics, Computing and Communication Technologies",
+        "Designed a domain generalised bagging ensemble model that increased the F1 score by 12% while reduced FLOPS by 70%"
+      ],
+      "publication": "IEEE CONECCT 2022 Conference on Electronics, Computing and Communication Technologies"
+    }
+  ],
   "profile_image": null
 }

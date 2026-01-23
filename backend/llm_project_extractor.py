@@ -1,8 +1,6 @@
-import requests
 import json
 import re
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
+from backend.llm_loader import pipe
 
 
 def fix_json_errors(json_str: str) -> str:
@@ -126,222 +124,82 @@ def parse_projects_regex_fallback(projects_text: str):
     
     return projects
 
-
-def extract_projects_with_llm(full_text: str):
+def normalize_projects(data):
     """
-    Extract projects, research, and experience sections and send to LLM.
+    Ensures description is always List[str]
+    """
+    for project in data:
+        desc = project.get("description", [])
+        normalized = []
+
+        for d in desc:
+            if isinstance(d, dict) and "text" in d:
+                normalized.append(d["text"])
+            elif isinstance(d, str):
+                normalized.append(d)
+
+        project["description"] = normalized
+
+    return data
+
+def extract_projects_with_llm(text: str):
+    """
+    Extract projects ONLY from resume text.
     """
 
-    # ✅ FIX 1: Detect PROJECTS or EXPERIENCE sections
-    projects_match = re.search(r'PROJECTS(\s*&\s*PUBLICATIONS)?', full_text, re.IGNORECASE)
-    experience_match = re.search(r'EXPERIENCE', full_text, re.IGNORECASE)
-    
-    if not projects_match and not experience_match:
-        print("DEBUG LLM: No PROJECTS or EXPERIENCE section found")
-        return {"projects": [], "research": [], "experience": []}
+    # 1. Isolate PROJECTS section (cheap + reliable)
+    upper = text.upper()
+    start = upper.find("PROJECT")
+    if start == -1:
+        return []
 
-    # Find the earliest section start
-    start_idx = float('inf')
-    if projects_match:
-        start_idx = min(start_idx, projects_match.start())
-        print(f"DEBUG LLM: PROJECTS keyword index = {projects_match.start()}")
-    if experience_match:
-        start_idx = min(start_idx, experience_match.start())
-        print(f"DEBUG LLM: EXPERIENCE keyword index = {experience_match.start()}")
-    
-    section_text = full_text[int(start_idx):]
-    
-    # ✅ STEP 2: Find section end (after both PROJECTS and EXPERIENCE)
-    end_keywords = [
-        "EDUCATION", "SKILLS",
-        "CERTIFICATIONS", "ACHIEVEMENTS",
-        "EXTRA", "AWARDS", "REFERENCES"
-    ]
+    end = len(text)
+    for k in ["EXPERIENCE", "EDUCATION", "SKILLS", "RESEARCH"]:
+        i = upper.find(k, start + 10)
+        if i != -1:
+            end = min(end, i)
 
-    end = len(section_text)
-    for k in end_keywords:
-        m = re.search(r"\n\s*" + k + r"\s*\n", section_text.upper()[10:])
-        if m:
-            end = min(end, 10 + m.start())
-            print(f"DEBUG LLM: Found end keyword '{k}' at {10 + m.start()}")
-            break
+    projects_text = text[start:end].strip()
 
-    combined_text = normalize_project_text(section_text[:end])
-
-    # print(f"DEBUG LLM: Sending PROJECTS+EXPERIENCE sections ({len(combined_text)} chars)")
-    # print("===== TEXT SENT TO LLM =====")
-    # print(combined_text[:500])  # Show first 500 chars
-    # print("====================================")
-
-
-    # ✅ IMPROVED PROMPT: LLM as cleaner/enhancer, not parser
+    # 2. STRICT prompt (no classification, no cleaning)
     prompt = f"""
-You are given PRE-EXTRACTED resume content.
+Extract projects from the text below.
 
-Your task:
-- CLEAN and IMPROVE the descriptions
-- Fix grammar and clarity
-- Classify each item into ONE type: "project", "research", or "experience"
-
-CRITICAL RULES:
-- DO NOT remove any content
-- DO NOT merge items
-- DO NOT split items
-- DO NOT invent data
-- Return items in the SAME structure you received
-
-Classification guide:
-- "project" → software, apps, systems, tools, personal/academic projects
-- "research" → papers, publications, book chapters, conference papers
-- "experience" → internships, jobs, work experience (company-based roles)
-
-Return JSON in this exact format:
-
-{{
-  "projects": [
-    {{
-      "title": "",
-      "description": ["", ""],
-      "repo": ""
-    }}
-  ],
-  "research": [
-    {{
-      "title": "",
-      "description": ["", ""]
-    }}
-  ],
-  "experience": [
-    {{
-      "company": "",
-      "role": "",
-      "from": "",
-      "to": "",
-      "description": ["", ""],
-      "skills": ["", ""]
-    }}
-  ]
-}}
+Return ONLY valid JSON in this format:
+[
+  {{
+    "title": "Project title",
+    "description": ["bullet point", "bullet point"]
+  }}
+]
 
 Rules:
-- Research items must NEVER appear inside "projects"
-- Internships and jobs go into "experience", not "projects"
-- For experience: extract company, role, dates, responsibilities, and skills used
-- Projects may have repos, research and experience must not
-- Do not invent data
-- Output ONLY JSON (no text before or after, no markdown)
+- Each project has ONE title
+- Description MUST be a list of strings
+- Do NOT add extra keys
+- Do NOT add explanations
+- Do NOT repeat content
+- Do NOT invent data
 
-TEXT:
-{combined_text}
+Text:
+{projects_text}
 """
 
-    payload = {
-        "model": "llama3",
-        "prompt": prompt,
-        "stream": False
-    }
+    # 3. Run model
+    output = pipe(
+        prompt,
+        max_new_tokens=512,
+        do_sample=False
+    )[0]["generated_text"]
+
+    # 4. Extract JSON safely
+    match = re.search(r"\[.*\]", output, re.S)
+    if not match:
+        print("LLM JSON not found")
+        return []
 
     try:
-        response = requests.post(
-            OLLAMA_URL,
-            json=payload,
-            timeout=180
-        )
-        response.raise_for_status()
-
-        raw = response.json().get("response", "")
-
-        print("\n===== RAW LLM PROJECT OUTPUT =====\n")
-        print(raw)
-        print("\n=================================\n")
-
-        # ✅ FIX 3: Safely extract JSON (handles object format now)
-        # Extract JSON safely even if model adds text
-        json_match = re.search(r"\{.*\}", raw, re.DOTALL)
-
-        if not json_match:
-            print("ERROR LLM: No JSON object found")
-            return {"projects": [], "research": [], "experience": []}
-
-        try:
-            # Clean the JSON string before parsing
-            json_str = json_match.group(0)
-            json_str = fix_json_errors(json_str)
-            
-            print("===== CLEANED JSON =====")
-            print(json_str[:500])
-            print("========================")
-            
-            result = json.loads(json_str)
-            
-            # Validate structure
-            if not isinstance(result, dict):
-                print("ERROR LLM: Response is not an object")
-                return {"projects": [], "research": [], "experience": []}
-            
-            # ✅ NEW RULE: Keep project if it has title and description
-            # Don't reject internships or single-bullet projects
-            projects_raw = result.get("projects", [])
-            research_raw = result.get("research", [])
-            experience_raw = result.get("experience", [])  # Extract experience
-            
-            # Minimal validation - keep if has title and description
-            projects_validated = [
-                p for p in projects_raw
-                if p.get("title") and p.get("description")
-            ]
-            
-            research_validated = [
-                r for r in research_raw
-                if r.get("title") and r.get("description")
-            ]
-            
-            # Validate experience - need company, role, and description
-            experience_validated = [
-                e for e in experience_raw
-                if e.get("company") and e.get("role") and e.get("description")
-            ]
-            
-            # ✅ FIX 3: Separate publications from projects automatically
-            projects_clean = []
-            publications = []
-            
-            for p in projects_validated:
-                title = p["title"].lower()
-                
-                if any(x in title for x in [
-                    "ieee", "transactions", "conference", "journal",
-                    "published", "paper", "publication"
-                ]):
-                    publications.append(p)
-                else:
-                    projects_clean.append(p)
-            
-            # Merge with research from LLM
-            all_research = research_validated + publications
-            
-            print(f"Extracted {len(projects_clean)} projects, {len(all_research)} research papers, and {len(experience_validated)} experiences")
-            
-            
-            return {
-                "projects": projects_clean,
-                "research": all_research,
-                "experience": experience_validated  # Return experience
-            }
-            
-        except json.JSONDecodeError as e:
-            print("ERROR LLM JSON:", e)
-            return {"projects": [], "research": [], "experience": []}
-
+        return json.loads(match.group())
     except Exception as e:
-        print(f"ERROR LLM: {e}")
-        return {"projects": [], "research": [], "experience": []}
-
-
-def check_ollama_available():
-    """Check if Ollama is running."""
-    try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=2)
-        return response.status_code == 200
-    except:
-        return False
+        print("JSON parse failed:", e)
+        return []
