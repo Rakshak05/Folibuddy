@@ -1,1 +1,2 @@
-#Comment
+# This file ensures the uploads directory is tracked by git
+# Uploaded files will be stored here

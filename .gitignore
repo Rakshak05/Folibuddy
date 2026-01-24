@@ -43,3 +43,7 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Uploaded files
+static/uploads/*
+!static/uploads/.gitkeep
