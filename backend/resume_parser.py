@@ -2,8 +2,6 @@ import pdfplumber
 import re
 import os
 
-USE_GEMINI = os.getenv("USE_GEMINI", "true").lower() == "true"
-
 
 def extract_text_from_pdf(file):
     """Extract all text AND hyperlinks from a PDF file."""
@@ -165,50 +163,24 @@ def extract_links(text):
 
 
 def parse_resume(text):
-    """Parse resume text and extract structured data.
-    
-    Uses Gemini API (if enabled) or falls back to LLM for projects.
+    """Parse resume text and extract structured data using Gemini API.
     
     Returns:
         dict: Dictionary containing name, email, phone, skills, projects, and links
     """
     
-    if USE_GEMINI:
-        # ✅ Use Gemini for full structured extraction
-        try:
-            from backend.llm_gemini_parser import parse_resume_gemini
-            
-            print("🔵 Using Gemini API for resume parsing...")
-            result = parse_resume_gemini(text)
-            
-            # Gemini returns everything, we're done!
-            print(f"✅ Gemini parsed: {result.get('name', 'Unknown')}")
-            return result
-            
-        except Exception as e:
-            print(f"⚠️ Gemini failed: {e}")
-            print("Falling back to old LLM parser...")
-            # Fall through to old parser
-    
-    # ✅ Old LLM parser (for projects/experience/research only)
-    from backend.llm_project_extractor import extract_projects_with_llm
-    
-    print("🟡 Using old LLM parser...")
-    
-    # Extract projects and research from RAW text (before normalization)
-    # This preserves line breaks and structure for LLM
-    llm_result = extract_projects_with_llm(text)
-    
-    # Normalize text for other extractions
-    normalized_text = normalize_text(text)
-    
-    return {
-        "name": extract_name(normalized_text),
-        "email": extract_email(normalized_text),
-        "phone": extract_phone(normalized_text),
-        "skills": extract_skills(normalized_text),
-        "projects": llm_result.get("projects", []),
-        "experience": llm_result.get("experience", []), 
-        "research": llm_result.get("research", []),
-        "links": extract_links(normalized_text)
-    }
+    try:
+        from backend.llm_gemini_parser import parse_resume_gemini
+        
+        print("🔵 Using Gemini API for resume parsing...")
+        result = parse_resume_gemini(text)
+        
+        # Gemini returns everything, we're done!
+        print(f"✅ Gemini parsed: {result.get('name', 'Unknown')}")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Gemini API failed: {e}")
+        raise Exception(
+            f"Resume parsing failed. Please ensure GEMINI_API_KEY is set in your .env file. Error: {str(e)}"
+        )

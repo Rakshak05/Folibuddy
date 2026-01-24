@@ -35,6 +35,19 @@ async def root():
     with open("frontend/upload.html", "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/health")
+async def health():
+    """Health check endpoint for monitoring and debugging"""
+    gemini_configured = bool(os.getenv("GEMINI_API_KEY"))
+    
+    return {
+        "status": "ok",
+        "llm": "gemini",
+        "gemini_configured": gemini_configured,
+        "environment": "production" if not os.getenv("DEBUG") else "development"
+    }
+
+
 @app.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     """API endpoint that returns JSON (for frontend/script.js)"""
@@ -58,7 +71,6 @@ async def upload_resume_web(file: UploadFile = File(...)):
         # Parse resume (includes LLM project extraction)
         data = parse_resume(text)
          
-        
         # STEP 1: Save portfolio data (single source of truth)
         portfolio_data = {
             "name": data.get("name", ""),
@@ -67,9 +79,9 @@ async def upload_resume_web(file: UploadFile = File(...)):
             "links": data.get("links", {}),
             "skills": data.get("skills", []),
             "projects": data.get("projects", []),
-            "experience": data.get("experience", []),  # Save experience from parsing
+            "experience": data.get("experience", []),
             "research": data.get("research", []),
-            "profile_image": None  # Will be set when user uploads in editor
+            "profile_image": None
         }
         
         save_portfolio_data(portfolio_data)
@@ -239,8 +251,8 @@ async def generate(request: Request):
         "phone": phone,
         "skills": skills_list,
         "projects": projects,
-        "experience": experience,  # Add experience data
-        "research": research,  # Add research publications from form
+        "experience": experience,
+        "research": research,
         "links": links
     }
 
@@ -262,7 +274,6 @@ def select_template(profile_image, data):
     Select portfolio template - using modern template design.
     """
     return "template.html"
-
 
 @app.get("/portfolio", response_class=HTMLResponse)
 async def view_portfolio(request: Request):
