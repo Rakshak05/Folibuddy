@@ -1,216 +1,254 @@
 /**
- * Production Flow for Portfolio Generation and Download
+ * Simplified Production Flow for Portfolio Generation and Download
  * 
  * Flow:
- * 1. User uploads resume → Backend generates portfolio
- * 2. Backend returns download URL
- * 3. Frontend redirects to download URL
- * 4. Browser auto-downloads ZIP
+ * 1. User clicks "Generate Portfolio" button
+ * 2. Frontend calls POST /generate-portfolio
+ * 3. Backend generates portfolio, creates ZIP, returns file
+ * 4. Frontend triggers browser download
+ * 5. Backend auto-cleans up temp files
  */
 
-// Example 1: Simple auto-download after generation
-async function generateAndDownloadPortfolio(resumeData) {
+// Example 1: Simple download (recommended)
+async function generateAndDownloadPortfolio() {
     try {
         console.log('Generating portfolio...');
 
-        // Step 1: Generate portfolio
+        // Call endpoint - no data needed, uses saved portfolio from /generate
         const response = await fetch('/generate-portfolio', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(resumeData)
+            }
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to generate portfolio: ${response.statusText}`);
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to generate portfolio');
         }
 
-        const result = await response.json();
+        // Get the ZIP file as a blob
+        const blob = await response.blob();
 
-        if (result.status === 'success') {
-            console.log(`✅ Portfolio generated! ID: ${result.portfolio_id}`);
+        // Create download link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolio.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
 
-            // Step 2: Redirect to download URL (auto-download)
-            window.location.href = result.download_url;
-
-            // Alternative: Show success message before download
-            // setTimeout(() => {
-            //     window.location.href = result.download_url;
-            // }, 1000);
-
-        } else {
-            throw new Error(result.error || 'Unknown error');
-        }
+        console.log('✅ Portfolio downloaded successfully!');
+        alert('Portfolio downloaded successfully!');
 
     } catch (error) {
         console.error('❌ Error:', error);
-        alert('Failed to generate portfolio. Please try again.');
+        alert('Error: ' + error.message);
     }
 }
 
 // Example 2: With loading indicator
-async function generatePortfolioWithLoading(resumeData) {
+async function generatePortfolioWithLoading() {
     const loadingDiv = document.getElementById('loading');
     const messageDiv = document.getElementById('message');
 
     try {
         // Show loading
-        loadingDiv.style.display = 'block';
-        messageDiv.textContent = 'Generating your portfolio...';
+        if (loadingDiv) loadingDiv.style.display = 'block';
+        if (messageDiv) messageDiv.textContent = 'Generating your portfolio...';
 
         const response = await fetch('/generate-portfolio', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(resumeData)
+            }
         });
 
-        const result = await response.json();
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to generate portfolio');
+        }
 
-        if (result.status === 'success') {
-            messageDiv.textContent = 'Portfolio ready! Download will start automatically...';
+        if (messageDiv) messageDiv.textContent = 'Portfolio ready! Downloading...';
 
-            // Wait a moment to show success message
-            setTimeout(() => {
-                window.location.href = result.download_url;
+        // Get blob and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolio.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
 
-                // Hide loading after download starts
-                setTimeout(() => {
-                    loadingDiv.style.display = 'none';
-                    messageDiv.textContent = 'Portfolio downloaded successfully!';
-                }, 2000);
-            }, 1000);
-        } else {
-            throw new Error(result.error);
+        if (messageDiv) {
+            messageDiv.textContent = 'Portfolio downloaded successfully!';
+            messageDiv.style.color = 'green';
         }
 
     } catch (error) {
         console.error('❌ Error:', error);
-        loadingDiv.style.display = 'none';
-        messageDiv.textContent = 'Error: ' + error.message;
-        messageDiv.style.color = 'red';
+        if (messageDiv) {
+            messageDiv.textContent = 'Error: ' + error.message;
+            messageDiv.style.color = 'red';
+        }
+    } finally {
+        if (loadingDiv) {
+            setTimeout(() => {
+                loadingDiv.style.display = 'none';
+            }, 2000);
+        }
     }
 }
 
-// Example 3: Using hidden iframe (alternative download method)
-async function generatePortfolioWithIframe(resumeData) {
+// Example 3: Add download button to your page
+function addDownloadButton() {
+    const button = document.createElement('button');
+    button.textContent = '📦 Download Portfolio ZIP';
+    button.className = 'btn btn-primary download-btn';
+    button.style.cssText = `
+        padding: 12px 24px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+    `;
+
+    button.addEventListener('mouseover', () => {
+        button.style.background = '#45a049';
+    });
+
+    button.addEventListener('mouseout', () => {
+        button.style.background = '#4CAF50';
+    });
+
+    button.onclick = async () => {
+        button.disabled = true;
+        button.textContent = '⏳ Generating...';
+
+        try {
+            await generateAndDownloadPortfolio();
+            button.textContent = '✅ Downloaded!';
+            setTimeout(() => {
+                button.textContent = '📦 Download Portfolio ZIP';
+                button.disabled = false;
+            }, 3000);
+        } catch (error) {
+            button.textContent = '❌ Failed - Try Again';
+            button.style.background = '#f44336';
+            setTimeout(() => {
+                button.textContent = '📦 Download Portfolio ZIP';
+                button.style.background = '#4CAF50';
+                button.disabled = false;
+            }, 3000);
+        }
+    };
+
+    // Add to form or page
+    const form = document.querySelector('form');
+    if (form) {
+        form.appendChild(button);
+    } else {
+        document.body.appendChild(button);
+    }
+}
+
+// Example 4: Integration with existing "Generate Portfolio" button
+document.addEventListener('DOMContentLoaded', () => {
+    const generateBtn = document.getElementById('generatePortfolioBtn');
+
+    if (generateBtn) {
+        generateBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await generateAndDownloadPortfolio();
+        });
+    }
+});
+
+// Example 5: With progress indicator
+async function generateWithProgress() {
+    const progressDiv = document.createElement('div');
+    progressDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 9999;
+    `;
+    progressDiv.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+            <div id="progressText">Generating portfolio...</div>
+        </div>
+    `;
+    document.body.appendChild(progressDiv);
+
     try {
         const response = await fetch('/generate-portfolio', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(resumeData)
+            }
         });
 
-        const result = await response.json();
+        document.getElementById('progressText').textContent = 'Creating ZIP file...';
 
-        if (result.status === 'success') {
-            // Create hidden iframe for download (keeps user on same page)
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = result.download_url;
-            document.body.appendChild(iframe);
-
-            // Remove iframe after download
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 5000);
-
-            console.log('✅ Portfolio download started!');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to generate portfolio');
         }
+
+        const blob = await response.blob();
+
+        document.getElementById('progressText').textContent = 'Downloading...';
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolio.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        progressDiv.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 10px; color: green;">✅</div>
+                <div>Portfolio downloaded!</div>
+            </div>
+        `;
+
+        setTimeout(() => {
+            document.body.removeChild(progressDiv);
+        }, 2000);
 
     } catch (error) {
         console.error('❌ Error:', error);
-        alert('Failed to download portfolio.');
+        progressDiv.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 10px; color: red;">❌</div>
+                <div>Error: ${error.message}</div>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="margin-top: 10px; padding: 8px 16px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        `;
     }
 }
 
-// Example 4: Integration with form submission
-document.getElementById('portfolioForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Collect form data
-    const formData = new FormData(e.target);
-    const resumeData = {
-        name: formData.get('name'),
-        headline: formData.get('headline'),
-        about: formData.get('about'),
-        email: formData.get('email'),
-        phone: formData.get('phone'),
-        skills: formData.get('skills').split(',').map(s => s.trim()),
-        projects: [], // Collect from form
-        experience: [], // Collect from form
-        research: [],
-        links: {
-            github: formData.get('github'),
-            linkedin: formData.get('linkedin')
-        }
-    };
-
-    // Generate and download
-    await generateAndDownloadPortfolio(resumeData);
+// Helper: Initialize download button when page loads
+window.addEventListener('load', () => {
+    // Uncomment to automatically add download button
+    // addDownloadButton();
 });
-
-// Example 5: With download button
-function addDownloadButton() {
-    const button = document.createElement('button');
-    button.textContent = '📦 Generate & Download Portfolio';
-    button.className = 'btn btn-primary';
-    button.onclick = async () => {
-        const resumeData = collectFormData(); // Your function to collect form data
-        await generateAndDownloadPortfolio(resumeData);
-    };
-
-    document.querySelector('.form-actions')?.appendChild(button);
-}
-
-// Helper function to collect form data
-function collectFormData() {
-    // Implement based on your form structure
-    return {
-        name: document.getElementById('name')?.value || '',
-        headline: document.getElementById('headline')?.value || '',
-        about: document.getElementById('about')?.value || '',
-        email: document.getElementById('email')?.value || '',
-        phone: document.getElementById('phone')?.value || '',
-        skills: getSkills(),
-        projects: getProjects(),
-        experience: getExperience(),
-        research: getResearch(),
-        links: getLinks(),
-        profile_image: null
-    };
-}
-
-// Helper functions (implement based on your form)
-function getSkills() {
-    const skillsInput = document.getElementById('skills')?.value || '';
-    return skillsInput.split(',').map(s => s.trim()).filter(s => s);
-}
-
-function getProjects() {
-    // Implement based on your project form structure
-    return [];
-}
-
-function getExperience() {
-    // Implement based on your experience form structure
-    return [];
-}
-
-function getResearch() {
-    // Implement based on your research form structure
-    return [];
-}
-
-function getLinks() {
-    return {
-        github: document.getElementById('github')?.value || '',
-        linkedin: document.getElementById('linkedin')?.value || '',
-        leetcode: document.getElementById('leetcode')?.value || '',
-        website: document.getElementById('website')?.value || ''
-    };
-}

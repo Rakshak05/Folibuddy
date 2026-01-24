@@ -300,80 +300,53 @@ async def view_portfolio(request: Request):
 
 
 @app.post("/generate-portfolio")
-async def generate_portfolio_zip(resume_data: dict):
+async def generate_portfolio_zip(background_tasks: BackgroundTasks):
     """
-    Generate portfolio from resume data and return download URL.
+    Generate portfolio and return as downloadable ZIP file.
     
     This endpoint:
-    1. Generates portfolio files in a unique temp folder
-    2. Returns the portfolio_id and download URL
-    3. Frontend can then redirect to download URL to trigger download
+    1. Loads portfolio data from saved JSON
+    2. Generates portfolio files in temp folder
+    3. Creates ZIP archive
+    4. Returns ZIP file for download
+    5. Cleans up temp files in background
     
-    Perfect for Render deployment - no auth needed, clean separation of concerns.
+    Perfect for Render deployment - no auth needed, automatic cleanup.
     """
     try:
-        # Generate portfolio files in temp directory
-        folder_path = generate_portfolio_files(resume_data)
+        # Load portfolio data from the saved JSON
+        portfolio_data = load_portfolio_data()
         
-        # Extract portfolio_id from folder path
-        portfolio_id = os.path.basename(folder_path)
+        if not portfolio_data:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "No portfolio data found. Please upload a resume first."}
+            )
         
-        return {
-            "status": "success",
-            "portfolio_id": portfolio_id,
-            "download_url": f"/download/{portfolio_id}"
-        }
-    
+        # Generate portfolio files in temp folder
+        folder_path = generate_portfolio_files(portfolio_data)
+        print(f"✅ Portfolio generated at: {folder_path}")
+        
+        # Create ZIP from the folder
+        zip_path = zip_portfolio(folder_path)
+        print(f"✅ Portfolio zipped at: {zip_path}")
+        
+        # Schedule cleanup after response is sent
+        background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
+        background_tasks.add_task(os.remove, zip_path)
+        
+        # Return ZIP file for download
+        return FileResponse(
+            path=zip_path,
+            filename="portfolio.zip",
+            media_type="application/zip"
+        )
+        
     except Exception as e:
-        print(f"❌ Error generating portfolio: {e}")
+        print(f"❌ Error generating portfolio ZIP: {e}")
         import traceback
         traceback.print_exc()
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to generate portfolio: {str(e)}"}
-        )
-
-
-@app.get("/download/{portfolio_id}")
-def download_portfolio(portfolio_id: str, background_tasks: BackgroundTasks):
-    """
-    Download a generated portfolio as a ZIP file.
-    
-    Args:
-        portfolio_id: UUID of the portfolio to download
-        
-    Returns:
-        FileResponse with the ZIP file
-        
-    The portfolio folder and ZIP are automatically cleaned up after download.
-    """
-    folder_path = os.path.join("backend", "temp", portfolio_id)
-
-    if not os.path.exists(folder_path):
-        return JSONResponse(
-            status_code=404,
-            content={"error": "Portfolio not found"}
-        )
-
-    try:
-        # Create ZIP archive
-        zip_path = create_zip(folder_path)
-        
-        # Schedule cleanup tasks (will run after response is sent)
-        background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
-        background_tasks.add_task(os.remove, zip_path)
-        
-        return FileResponse(
-            path=zip_path,
-            media_type="application/zip",
-            filename="portfolio.zip"
-        )
-    
-    except Exception as e:
-        print(f"❌ Error creating ZIP: {e}")
-        import traceback
-        traceback.print_exc()
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Failed to create ZIP: {str(e)}"}
         )
