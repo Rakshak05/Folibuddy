@@ -511,7 +511,12 @@
                 }
             </script>
 
-            <button type="submit" id="submit-btn">Generate Portfolio</button>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button type="submit" id="submit-btn">Generate Portfolio</button>
+                <button type="button" id="download-zip-btn" style="background-color: #28a745;">
+                    📦 Download Portfolio ZIP
+                </button>
+            </div>
 
         </form>
 
@@ -570,6 +575,60 @@
                 alert('Error: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Generate Portfolio';
+            }
+        });
+
+        // Download Portfolio ZIP functionality
+        document.getElementById('download-zip-btn').addEventListener('click', async function () {
+            const downloadBtn = this;
+            const originalText = downloadBtn.textContent;
+
+            try {
+                // Show loading state
+                downloadBtn.disabled = true;
+                downloadBtn.textContent = '⏳ Generating ZIP...';
+
+                // Call the new endpoint
+                const response = await fetch('/generate-portfolio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Download the ZIP file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'portfolio.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    // Success feedback
+                    downloadBtn.textContent = '✅ Downloaded!';
+                    downloadBtn.style.backgroundColor = '#28a745';
+
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        downloadBtn.textContent = originalText;
+                        downloadBtn.disabled = false;
+                    }, 3000);
+
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.error || 'Failed to generate portfolio'));
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                }
+
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
             }
         });
     </script>

@@ -1,9 +1,14 @@
 {
   "name": "RAKSHAK S BARKUR",
-  "headline": "",
-  "about": "",
   "email": "rakshakbarkur@gmail.com",
   "phone": "+91 8317453286",
+  "links": {
+    "github": "https://github.com/Rakshak05",
+    "linkedin": "https://www.linkedin.com/in/RakshakSB/",
+    "leetcode": "https://leetcode.com/u/_Rakshak_/",
+    "website": "https://conatusbharat.com/",
+    "custom": []
+  },
   "skills": [
     "C/C++",
     "Python",
@@ -30,26 +35,48 @@
     "Google Prompt Engg.",
     "CP",
     "MySQL",
-    "Python"
+    "Python",
+    "TypeScript",
+    "Nest.js",
+    "JavaScript",
+    "MongoDB",
+    "Kotlin",
+    "React",
+    "Firebase",
+    "FireStore",
+    "Cloud functions",
+    "FastAPI"
   ],
   "projects": [
     {
       "title": "Resume to Cover Letter generator",
       "description": [
-        "Fine-tuningLLaMA-3togeneratepersonalized,role-specificcoverlettersbyaligningresumeskillsandprojects",
-        "with job descriptions.",
-        "Evaluated open-source (Mistral, Qwen) and commercial LLMs (Gemini, GPT), identifying gaps in contextual",
-        "personalization and scope for domain-specific fine-tuning."
+        "Fine-tuningLLaMA-3togeneratepersonalized,role-specificcoverlettersbyaligningresumeskillsandprojects\nwith job descriptions.",
+        "Evaluated open-source (Mistral, Qwen) and commercial LLMs (Gemini, GPT), identifying gaps in contextual\npersonalization and scope for domain-specific fine-tuning."
+      ],
+      "technologies": [
+        "LLaMA-3",
+        "Mistral",
+        "Qwen",
+        "Gemini",
+        "GPT"
       ],
       "repo": ""
     },
     {
       "title": "BMSIT Faculty App",
       "description": [
-        "Developing a cross-platform meeting management app using Kotlin, React and Firebase for schedul-",
-        "ing, attendance tracking and meeting records.",
-        "Integrated FireStore, Cloud functionsandFastAPI backendwithGoogle’s Speech-to-Text APIfor",
-        "transcription and an AI model for meeting summarizations."
+        "Developing a cross-platform meeting management app using Kotlin, React and Firebase for schedul-\ning, attendance tracking and meeting records.",
+        "Integrated FireStore, Cloud functionsandFastAPI backendwithGoogle’s Speech-to-Text APIfor\ntranscription and an AI model for meeting summarizations."
+      ],
+      "technologies": [
+        "Kotlin",
+        "React",
+        "Firebase",
+        "FireStore",
+        "Cloud functions",
+        "FastAPI",
+        "Google’s Speech-to-Text API"
       ],
       "repo": ""
     }
@@ -74,33 +101,26 @@
   "research": [
     {
       "title": "Early Detection of Neonatal Sepsis using Federated Learning",
-      "publication": "",
       "description": [
-        "BuiltaTransformer-based FederatedLearningmodelenablinghospitalstocollaborativelytrainonEHRs",
-        "without sharing patient data, ensuring HIPAA & GDPR compliance."
-      ]
+        "BuiltaTransformer-based FederatedLearningmodelenablinghospitalstocollaborativelytrainonEHRs\nwithout sharing patient data, ensuring HIPAA & GDPR compliance."
+      ],
+      "publication": ""
     },
     {
       "title": "Medical Image Analysis using Deep Learning (Co-author)",
-      "publication": "upcoming book",
       "description": [
         "Co-authored a chapter for an upcoming book under the guidance of Dr Niranjanamurthy .",
         "Focused on applying deep learning models for segmentation and classification of medical imagery."
-      ]
+      ],
+      "publication": "upcoming book"
     },
     {
       "title": "AI and Big Data Analytics in Congenital Heart Disease",
-      "publication": "",
       "description": [
         "Experimenting with various models and available datasets for improved diagnosis and treatment prediction."
-      ]
+      ],
+      "publication": ""
     }
   ],
-  "links": {
-    "github": "https://github.com/Rakshak05",
-    "linkedin": "https://www.linkedin.com/in/RakshakSB/",
-    "leetcode": "https://leetcode.com/u/_Rakshak_/",
-    "website": "https://conatusbharat.com/",
-    "custom": []
-  }
+  "profile_image": null
 }
