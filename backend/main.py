@@ -13,6 +13,7 @@ from backend.portfolio import generate_portfolio
 from backend.portfolio_generator import save_portfolio_data, load_portfolio_data
 from backend.services.portfolio_generator import generate_portfolio_files
 from backend.services.zip_service import zip_portfolio
+from backend.utils.zipper import zip_portfolio as create_zip
 
 app = FastAPI(title="Resume to Portfolio API")
 
@@ -299,35 +300,29 @@ async def view_portfolio(request: Request):
 
 
 @app.post("/generate-portfolio")
-async def generate_portfolio_zip(resume_data: dict, background_tasks: BackgroundTasks):
+async def generate_portfolio_zip(resume_data: dict):
     """
-    Generate portfolio from resume data and return as downloadable ZIP file.
+    Generate portfolio from resume data and return download URL.
     
     This endpoint:
     1. Generates portfolio files in a unique temp folder
-    2. Creates a ZIP archive of the folder
-    3. Returns the ZIP as a file download
-    4. Cleans up temp files in the background after response is sent
+    2. Returns the portfolio_id and download URL
+    3. Frontend can then redirect to download URL to trigger download
     
-    Perfect for Render deployment - no auth needed, automatic cleanup.
+    Perfect for Render deployment - no auth needed, clean separation of concerns.
     """
     try:
         # Generate portfolio files in temp directory
         folder_path = generate_portfolio_files(resume_data)
         
-        # Create ZIP archive
-        zip_path = zip_portfolio(folder_path)
+        # Extract portfolio_id from folder path
+        portfolio_id = os.path.basename(folder_path)
         
-        # Schedule cleanup tasks (will run after response is sent)
-        background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
-        background_tasks.add_task(os.remove, zip_path)
-        
-        # Return ZIP file as download
-        return FileResponse(
-            path=zip_path,
-            filename="portfolio.zip",
-            media_type="application/zip"
-        )
+        return {
+            "status": "success",
+            "portfolio_id": portfolio_id,
+            "download_url": f"/download/{portfolio_id}"
+        }
     
     except Exception as e:
         print(f"❌ Error generating portfolio: {e}")
@@ -336,4 +331,49 @@ async def generate_portfolio_zip(resume_data: dict, background_tasks: Background
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to generate portfolio: {str(e)}"}
+        )
+
+
+@app.get("/download/{portfolio_id}")
+def download_portfolio(portfolio_id: str, background_tasks: BackgroundTasks):
+    """
+    Download a generated portfolio as a ZIP file.
+    
+    Args:
+        portfolio_id: UUID of the portfolio to download
+        
+    Returns:
+        FileResponse with the ZIP file
+        
+    The portfolio folder and ZIP are automatically cleaned up after download.
+    """
+    folder_path = os.path.join("backend", "temp", portfolio_id)
+
+    if not os.path.exists(folder_path):
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Portfolio not found"}
+        )
+
+    try:
+        # Create ZIP archive
+        zip_path = create_zip(folder_path)
+        
+        # Schedule cleanup tasks (will run after response is sent)
+        background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
+        background_tasks.add_task(os.remove, zip_path)
+        
+        return FileResponse(
+            path=zip_path,
+            media_type="application/zip",
+            filename="portfolio.zip"
+        )
+    
+    except Exception as e:
+        print(f"❌ Error creating ZIP: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to create ZIP: {str(e)}"}
         )

@@ -1,13 +1,19 @@
 /**
- * Example frontend integration for portfolio ZIP download
- * Add this to your existing frontend JavaScript
+ * Production Flow for Portfolio Generation and Download
+ * 
+ * Flow:
+ * 1. User uploads resume → Backend generates portfolio
+ * 2. Backend returns download URL
+ * 3. Frontend redirects to download URL
+ * 4. Browser auto-downloads ZIP
  */
 
-// Example 1: Download portfolio from resume data
-async function downloadPortfolioZip(resumeData) {
+// Example 1: Simple auto-download after generation
+async function generateAndDownloadPortfolio(resumeData) {
     try {
         console.log('Generating portfolio...');
 
+        // Step 1: Generate portfolio
         const response = await fetch('/generate-portfolio', {
             method: 'POST',
             headers: {
@@ -20,49 +26,150 @@ async function downloadPortfolioZip(resumeData) {
             throw new Error(`Failed to generate portfolio: ${response.statusText}`);
         }
 
-        // Get the ZIP file as a blob
-        const blob = await response.blob();
+        const result = await response.json();
 
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'portfolio.zip';
-        document.body.appendChild(a);
-        a.click();
+        if (result.status === 'success') {
+            console.log(`✅ Portfolio generated! ID: ${result.portfolio_id}`);
 
-        // Cleanup
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+            // Step 2: Redirect to download URL (auto-download)
+            window.location.href = result.download_url;
 
-        console.log('✅ Portfolio downloaded successfully!');
+            // Alternative: Show success message before download
+            // setTimeout(() => {
+            //     window.location.href = result.download_url;
+            // }, 1000);
+
+        } else {
+            throw new Error(result.error || 'Unknown error');
+        }
 
     } catch (error) {
-        console.error('❌ Error downloading portfolio:', error);
-        alert('Failed to download portfolio. Please try again.');
+        console.error('❌ Error:', error);
+        alert('Failed to generate portfolio. Please try again.');
     }
 }
 
-// Example 2: Add download button to editor page
-function addDownloadButton() {
-    const downloadBtn = document.createElement('button');
-    downloadBtn.textContent = '📦 Download Portfolio ZIP';
-    downloadBtn.className = 'btn btn-primary';
-    downloadBtn.onclick = async () => {
-        // Collect form data
-        const resumeData = collectFormData();
-        await downloadPortfolioZip(resumeData);
+// Example 2: With loading indicator
+async function generatePortfolioWithLoading(resumeData) {
+    const loadingDiv = document.getElementById('loading');
+    const messageDiv = document.getElementById('message');
+
+    try {
+        // Show loading
+        loadingDiv.style.display = 'block';
+        messageDiv.textContent = 'Generating your portfolio...';
+
+        const response = await fetch('/generate-portfolio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(resumeData)
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            messageDiv.textContent = 'Portfolio ready! Download will start automatically...';
+
+            // Wait a moment to show success message
+            setTimeout(() => {
+                window.location.href = result.download_url;
+
+                // Hide loading after download starts
+                setTimeout(() => {
+                    loadingDiv.style.display = 'none';
+                    messageDiv.textContent = 'Portfolio downloaded successfully!';
+                }, 2000);
+            }, 1000);
+        } else {
+            throw new Error(result.error);
+        }
+
+    } catch (error) {
+        console.error('❌ Error:', error);
+        loadingDiv.style.display = 'none';
+        messageDiv.textContent = 'Error: ' + error.message;
+        messageDiv.style.color = 'red';
+    }
+}
+
+// Example 3: Using hidden iframe (alternative download method)
+async function generatePortfolioWithIframe(resumeData) {
+    try {
+        const response = await fetch('/generate-portfolio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(resumeData)
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            // Create hidden iframe for download (keeps user on same page)
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = result.download_url;
+            document.body.appendChild(iframe);
+
+            // Remove iframe after download
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 5000);
+
+            console.log('✅ Portfolio download started!');
+        }
+
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Failed to download portfolio.');
+    }
+}
+
+// Example 4: Integration with form submission
+document.getElementById('portfolioForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Collect form data
+    const formData = new FormData(e.target);
+    const resumeData = {
+        name: formData.get('name'),
+        headline: formData.get('headline'),
+        about: formData.get('about'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        skills: formData.get('skills').split(',').map(s => s.trim()),
+        projects: [], // Collect from form
+        experience: [], // Collect from form
+        research: [],
+        links: {
+            github: formData.get('github'),
+            linkedin: formData.get('linkedin')
+        }
     };
 
-    // Add button to form
-    const form = document.querySelector('form');
-    if (form) {
-        form.appendChild(downloadBtn);
-    }
+    // Generate and download
+    await generateAndDownloadPortfolio(resumeData);
+});
+
+// Example 5: With download button
+function addDownloadButton() {
+    const button = document.createElement('button');
+    button.textContent = '📦 Generate & Download Portfolio';
+    button.className = 'btn btn-primary';
+    button.onclick = async () => {
+        const resumeData = collectFormData(); // Your function to collect form data
+        await generateAndDownloadPortfolio(resumeData);
+    };
+
+    document.querySelector('.form-actions')?.appendChild(button);
 }
 
-// Example 3: Collect form data (adjust based on your form structure)
+// Helper function to collect form data
 function collectFormData() {
+    // Implement based on your form structure
     return {
         name: document.getElementById('name')?.value || '',
         headline: document.getElementById('headline')?.value || '',
@@ -78,7 +185,7 @@ function collectFormData() {
     };
 }
 
-// Helper functions (customize based on your form)
+// Helper functions (implement based on your form)
 function getSkills() {
     const skillsInput = document.getElementById('skills')?.value || '';
     return skillsInput.split(',').map(s => s.trim()).filter(s => s);
@@ -86,56 +193,17 @@ function getSkills() {
 
 function getProjects() {
     // Implement based on your project form structure
-    const projects = [];
-    let index = 1;
-
-    while (document.getElementById(`project_title_${index}`)) {
-        projects.push({
-            title: document.getElementById(`project_title_${index}`).value,
-            description: parseDescription(document.getElementById(`project_desc_${index}`).value),
-            repo: document.getElementById(`project_repo_${index}`)?.value || ''
-        });
-        index++;
-    }
-
-    return projects;
+    return [];
 }
 
 function getExperience() {
     // Implement based on your experience form structure
-    const experience = [];
-    let index = 1;
-
-    while (document.getElementById(`exp_company_${index}`)) {
-        experience.push({
-            company: document.getElementById(`exp_company_${index}`).value,
-            role: document.getElementById(`exp_role_${index}`).value,
-            from: document.getElementById(`exp_from_${index}`)?.value || '',
-            to: document.getElementById(`exp_to_${index}`)?.value || '',
-            description: parseDescription(document.getElementById(`exp_desc_${index}`).value),
-            skills: (document.getElementById(`exp_skills_${index}`)?.value || '').split(',').map(s => s.trim()).filter(s => s)
-        });
-        index++;
-    }
-
-    return experience;
+    return [];
 }
 
 function getResearch() {
     // Implement based on your research form structure
-    const research = [];
-    let index = 1;
-
-    while (document.getElementById(`research_title_${index}`)) {
-        research.push({
-            title: document.getElementById(`research_title_${index}`).value,
-            publication: document.getElementById(`research_publication_${index}`)?.value || '',
-            description: parseDescription(document.getElementById(`research_desc_${index}`).value)
-        });
-        index++;
-    }
-
-    return research;
+    return [];
 }
 
 function getLinks() {
@@ -143,37 +211,6 @@ function getLinks() {
         github: document.getElementById('github')?.value || '',
         linkedin: document.getElementById('linkedin')?.value || '',
         leetcode: document.getElementById('leetcode')?.value || '',
-        website: document.getElementById('website')?.value || '',
-        custom: getCustomLinks()
+        website: document.getElementById('website')?.value || ''
     };
 }
-
-function getCustomLinks() {
-    const customLinks = [];
-    let index = 1;
-
-    while (document.getElementById(`custom_label_${index}`)) {
-        const label = document.getElementById(`custom_label_${index}`).value;
-        const url = document.getElementById(`custom_url_${index}`).value;
-
-        if (label && url) {
-            customLinks.push({ label, url });
-        }
-        index++;
-    }
-
-    return customLinks;
-}
-
-function parseDescription(text) {
-    // Convert text to array of bullet points
-    return text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-}
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Uncomment to add download button automatically
-    // addDownloadButton();
-});
