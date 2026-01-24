@@ -1,14 +1,9 @@
 {
   "name": "Rahasya Barkur",
+  "headline": "",
+  "about": "",
   "email": "barkurrahasya@gmail.com",
   "phone": "4134660747",
-  "links": {
-    "github": "https://github.com/RAHASYABARKUR",
-    "linkedin": "https://www.linkedin.com/in/rahasya/",
-    "leetcode": "",
-    "website": "",
-    "custom": []
-  },
   "skills": [
     "Python",
     "SQL",
@@ -48,22 +43,6 @@
       "description": [
         "Implemented an end-to-end application leveraging this model to extract location from image evidence without metadata, aiding law enforcement in assigning jurisdiction.",
         "Enhanced the open-source GeoCLIP model by detecting scripts and their associated countries in images using CLIP embeddings and web-scraped information, improving country accuracy detection by 20%."
-      ],
-      "technologies": [
-        "CLIP embeddings",
-        "GeoCLIP model"
-      ],
-      "repo": ""
-    },
-    {
-      "title": "Spaghetti Sniffer",
-      "description": [
-        "Participated in HackUmass 2024, a 30-hour hackathon to Build, a VS code extension, Spaghetti Sniffer. This highlight poorly written code sarcastically developed using Ollama an LLM, backed by graph algorithms on Abstract Syntax Tree."
-      ],
-      "technologies": [
-        "Ollama",
-        "LLM",
-        "Abstract Syntax Tree"
       ],
       "repo": ""
     }
@@ -108,7 +87,7 @@
         "Applied U-Net model for segmentation of malignant and benign cells from hospital-provided samples, integrating a user-friendly GUI for streamlined labeling by medical professionals."
       ],
       "skills": [
-        "U-Net model"
+        "U-Net"
       ]
     }
   ],
@@ -140,5 +119,12 @@
       "publication": "IEEE CONECCT 2022 Conference on Electronics, Computing and Communication Technologies"
     }
   ],
+  "links": {
+    "github": "https://github.com/RAHASYABARKUR",
+    "linkedin": "https://www.linkedin.com/in/rahasya/",
+    "leetcode": "",
+    "website": "",
+    "custom": []
+  },
   "profile_image": null
 }

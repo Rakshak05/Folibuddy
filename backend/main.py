@@ -12,7 +12,6 @@ from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
 from backend.portfolio import generate_portfolio
 from backend.portfolio_generator import save_portfolio_data, load_portfolio_data
-from backend.llm_generator import check_ollama_available, enhance_project_description
 
 app = FastAPI(title="Resume to Portfolio API")
 
@@ -257,57 +256,7 @@ async def generate(request: Request):
     }
 
 
-@app.post("/generate-description")
-async def generate_description_endpoint(request: Request):
-    """Generate project description using AI on demand."""
-    try:
-        data = await request.json()
-        title = data.get("title", "").strip()
-        repo_url = data.get("repo_url", "").strip()
-        current_description = data.get("current_description", "").strip()
-        
-        if not title:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Project title is required"}
-            )
-        
-        # Check if title is too short/generic
-        if len(title) < 3:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Insufficient content - title too short for AI generation"}
-            )
-        
-        # Check if Ollama is available
-        if not check_ollama_available():
-            return JSONResponse(
-                status_code=503,
-                content={"error": "AI service unavailable. Please ensure Ollama is running."}
-            )
-        
-        # Generate description
-        description = enhance_project_description(title, current_description, repo_url)
-        
-        # Check if description is meaningful
-        if not description or len(description.strip()) < 10:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Unable to generate meaningful content from provided information"}
-            )
-        
-        return JSONResponse(content={"description": description})
-    
-    except Exception as e:
-        print(f"Error generating description: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": "An error occurred while generating the description"}
-        )
-
-
 # STEP 4: Portfolio render endpoint
-# Portfolio render endpoint
 def select_template(profile_image, data):
     """
     Select portfolio template - using modern template design.
