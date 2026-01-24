@@ -1,17 +1,13 @@
 import sys
 import os
-import uvicorn
 from pathlib import Path
 
 # Force project root into PYTHONPATH
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(
-        "run:app", 
-        host="0.0.0.0",
-        port=port,
-        reload=False 
-    )
+# Import the app from main.py
+from main import app
+
+# This is needed for Render to find the app
+__all__ = ["app"]
