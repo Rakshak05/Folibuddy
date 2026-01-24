@@ -1,12 +1,14 @@
 import sys
-import os
 from pathlib import Path
 
-# Force project root into PYTHONPATH
+# Add both root and backend to Python path
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
+BACKEND = ROOT / "backend"
 
-# Import the app from main.py
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(BACKEND))
+
+# Import the app from backend/main.py
 from main import app
 
 # This is needed for Render to find the app
