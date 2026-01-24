@@ -170,7 +170,7 @@ async def generate(request: Request):
     projects = []
     project_index = 1
     
-    from backend.utils.formatters import parse_description_from_text
+    from .utils.formatters import parse_description_from_text
     
     while True:
         title_key = f"project_title_{project_index}"
