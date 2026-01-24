@@ -1,15 +1,18 @@
-from fastapi import FastAPI, UploadFile, File, Form, Request
+from fastapi import FastAPI, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import List
 import os
+import shutil
 
 from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
 from backend.portfolio import generate_portfolio
 from backend.portfolio_generator import save_portfolio_data, load_portfolio_data
+from backend.services.portfolio_generator import generate_portfolio_files
+from backend.services.zip_service import zip_portfolio
 
 app = FastAPI(title="Resume to Portfolio API")
 
@@ -293,3 +296,44 @@ async def view_portfolio(request: Request):
             **data
         }
     )
+
+
+@app.post("/generate-portfolio")
+async def generate_portfolio_zip(resume_data: dict, background_tasks: BackgroundTasks):
+    """
+    Generate portfolio from resume data and return as downloadable ZIP file.
+    
+    This endpoint:
+    1. Generates portfolio files in a unique temp folder
+    2. Creates a ZIP archive of the folder
+    3. Returns the ZIP as a file download
+    4. Cleans up temp files in the background after response is sent
+    
+    Perfect for Render deployment - no auth needed, automatic cleanup.
+    """
+    try:
+        # Generate portfolio files in temp directory
+        folder_path = generate_portfolio_files(resume_data)
+        
+        # Create ZIP archive
+        zip_path = zip_portfolio(folder_path)
+        
+        # Schedule cleanup tasks (will run after response is sent)
+        background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
+        background_tasks.add_task(os.remove, zip_path)
+        
+        # Return ZIP file as download
+        return FileResponse(
+            path=zip_path,
+            filename="portfolio.zip",
+            media_type="application/zip"
+        )
+    
+    except Exception as e:
+        print(f"❌ Error generating portfolio: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to generate portfolio: {str(e)}"}
+        )

@@ -47,3 +47,6 @@ Thumbs.db
 # Uploaded files
 static/uploads/*
 !static/uploads/.gitkeep
+
+# Temporary portfolio files
+backend/temp/

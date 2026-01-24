@@ -2,6 +2,12 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import shutil
 import os
+import uuid
+
+BASE_OUTPUT_DIR = os.getenv(
+    "PORTFOLIO_OUTPUT_DIR",
+    "backend/temp"
+)
 
 def generate_portfolio(resume):
     """
@@ -38,10 +44,10 @@ def generate_portfolio(resume):
     # Fix CSS paths for static file generation
     html_content = html_content.replace('href="/static/template-style.css"', 'href="template-style.css"')
     
-    # Create output folder on Desktop
-    desktop = Path.home() / "Desktop"
-    folder = desktop / "Personal Portfolio"
-    folder.mkdir(exist_ok=True)
+    # Create output folder using environment variable or default temp directory
+    portfolio_id = str(uuid.uuid4())
+    folder = Path(BASE_OUTPUT_DIR) / portfolio_id
+    folder.mkdir(parents=True, exist_ok=True)
     
     # Write index.html
     (folder / "index.html").write_text(html_content, encoding="utf-8")
