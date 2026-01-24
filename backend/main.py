@@ -5,8 +5,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import List
 import os
-import shutil
-import uuid
 
 from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
@@ -177,26 +175,6 @@ async def generate(request: Request):
         else:
             break
     
-    # Handle profile image upload
-    profile_image_path = None
-    if "profile_image" in form_data:
-        profile_image = form_data["profile_image"]
-        if hasattr(profile_image, 'filename') and profile_image.filename:
-            # Ensure uploads directory exists
-            os.makedirs("static/uploads", exist_ok=True)
-            
-            # Generate unique filename
-            file_extension = os.path.splitext(profile_image.filename)[1]
-            unique_filename = f"{uuid.uuid4()}{file_extension}"
-            file_path = os.path.join("static/uploads", unique_filename)
-            
-            # Save the file
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(profile_image.file, buffer)
-            
-            # Store the path relative to static
-            profile_image_path = f"/uploads/{unique_filename}"
-    
     # Parse experience from form data
     experience = []
     experience_index = 1
@@ -230,6 +208,29 @@ async def generate(request: Request):
         else:
             break
     
+    # Parse research publications from form data
+    research = []
+    research_index = 1
+    
+    while True:
+        title_key = f"research_title_{research_index}"
+        publication_key = f"research_publication_{research_index}"
+        desc_key = f"research_desc_{research_index}"
+        
+        if title_key in form_data:
+            # Parse description text to list
+            desc_text = form_data.get(desc_key, "")
+            desc_list = parse_description_from_text(desc_text)
+            
+            research.append({
+                "title": form_data[title_key],
+                "publication": form_data.get(publication_key, ""),
+                "description": desc_list
+            })
+            research_index += 1
+        else:
+            break
+    
     resume = {
         "name": name,
         "headline": form_data.get("headline", ""),
@@ -239,12 +240,11 @@ async def generate(request: Request):
         "skills": skills_list,
         "projects": projects,
         "experience": experience,  # Add experience data
-        "research": load_portfolio_data().get("research", []),  # Preserve research from parsing
-        "links": links,
-        "profile_image": profile_image_path
+        "research": research,  # Add research publications from form
+        "links": links
     }
 
-    # Save updated portfolio data (including profile image)
+    # Save updated portfolio data
     save_portfolio_data(resume)
 
     # Generate portfolio
@@ -282,4 +282,3 @@ async def view_portfolio(request: Request):
             **data
         }
     )
-

@@ -149,18 +149,6 @@
                 placeholder="Write a brief introduction about yourself, your interests, and what you're passionate about...">{{ data.about or '' }}</textarea>
             <div class="skills-hint">A short bio that will appear in your portfolio</div>
 
-            <h2>Profile Image (Optional)</h2>
-            <label>Upload Profile Picture</label>
-            <input type="file" name="profile_image" id="profile_image"
-                accept="image/png, image/jpeg, image/jpg, image/webp">
-            <div class="skills-hint">Upload a profile picture to use the premium WorkFolio template. Accepted formats:
-                PNG, JPG, JPEG, WEBP</div>
-
-            <div id="image-preview" style="margin-top: 10px; margin-bottom: 20px; display: none;">
-                <img id="preview-img"
-                    style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #007bff;">
-            </div>
-
             <h2>Skills</h2>
             <label>Your Skills (comma separated)</label>
             <textarea name="skills" required>{{ data.skills | join(", ") }}</textarea>
@@ -452,6 +440,77 @@
                 }
             </script>
 
+            <h2>Research Publications</h2>
+            <p class="skills-hint" style="margin-top: -10px; margin-bottom: 20px;">Add your research papers and
+                publications</p>
+            <div id="research-container">
+                {% for research in data.research %}
+                <div class="project-block" data-research-index="{{ loop.index }}">
+                    <label>Publication {{ loop.index }} - Title</label>
+                    <input type="text" name="research_title_{{ loop.index }}" value="{{ research.title }}"
+                        placeholder="e.g., Deep Learning for Medical Image Analysis" required>
+
+                    <label>Publication {{ loop.index }} - Publication Venue</label>
+                    <input type="text" name="research_publication_{{ loop.index }}"
+                        value="{{ research.publication or '' }}"
+                        placeholder="e.g., IEEE Conference on Computer Vision, Nature, arXiv">
+                    <div class="skills-hint" style="margin-top: -10px;">Journal/Conference name where published</div>
+
+                    <label>Description</label>
+                    <textarea name="research_desc_{{ loop.index }}"
+                        placeholder="One point per line&#10;e.g., Developed novel CNN architecture&#10;Achieved 95% accuracy&#10;Presented at international conference"
+                        style="min-height: 100px;">{{ research.description }}</textarea>
+                    <div class="skills-hint" style="margin-top: -10px;">Key contributions and findings (one per line)
+                    </div>
+
+                    {% if loop.index > 1 or (data.research | length) == 0 %}
+                    <button type="button" class="remove-research-btn" onclick="removeResearch(this)"
+                        style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                        Remove Publication
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="addResearch()"
+                style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; margin-bottom: 20px;">
+                + Add Research Publication
+            </button>
+
+            <script>
+                let researchCounter = {{ data.research | length }};
+
+                function addResearch() {
+                    researchCounter++;
+                    const container = document.getElementById('research-container');
+                    const newResearch = document.createElement('div');
+                    newResearch.className = 'project-block';
+                    newResearch.setAttribute('data-research-index', researchCounter);
+                    newResearch.innerHTML = `
+                        <label>Publication ${researchCounter} - Title</label>
+                        <input type="text" name="research_title_${researchCounter}" placeholder="e.g., Deep Learning for Medical Image Analysis" required>
+
+                        <label>Publication ${researchCounter} - Publication Venue</label>
+                        <input type="text" name="research_publication_${researchCounter}" placeholder="e.g., IEEE Conference on Computer Vision, Nature, arXiv">
+                        <div class="skills-hint" style="margin-top: -10px;">Journal/Conference name where published</div>
+
+                        <label>Description</label>
+                        <textarea name="research_desc_${researchCounter}" placeholder="One point per line&#10;e.g., Developed novel CNN architecture&#10;Achieved 95% accuracy&#10;Presented at international conference" style="min-height: 100px;"></textarea>
+                        <div class="skills-hint" style="margin-top: -10px;">Key contributions and findings (one per line)</div>
+
+                        <button type="button" class="remove-research-btn" onclick="removeResearch(this)" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                            Remove Publication
+                        </button>
+                    `;
+                    container.appendChild(newResearch);
+                }
+
+                function removeResearch(button) {
+                    button.parentElement.remove();
+                }
+            </script>
+
             <button type="submit" id="submit-btn">Generate Portfolio</button>
 
         </form>
@@ -471,21 +530,6 @@
     </div>
 
     <script>
-        // Profile image preview
-        document.getElementById('profile_image').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('preview-img').src = e.target.result;
-                    document.getElementById('image-preview').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('image-preview').style.display = 'none';
-            }
-        });
-
         document.getElementById('resume-form').addEventListener('submit', async function (event) {
             event.preventDefault();
 
