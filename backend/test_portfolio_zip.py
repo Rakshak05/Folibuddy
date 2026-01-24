@@ -3,8 +3,8 @@ Test script for portfolio generation and ZIP functionality
 """
 import os
 import shutil
-from services.portfolio_generator import generate_portfolio_files
-from services.zip_service import zip_portfolio
+from backend.services.portfolio_generator import generate_portfolio_files
+from backend.services.zip_service import zip_portfolio
 
 def test_portfolio_generation():
     """Test that portfolio files are generated correctly"""
