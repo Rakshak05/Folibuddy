@@ -6,6 +6,9 @@ from fastapi.staticfiles import StaticFiles
 from typing import List
 import os
 import shutil
+import threading
+import time
+import requests
 
 from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
@@ -32,6 +35,35 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+# Self-ping function to keep Render service alive
+def keep_alive():
+    """
+    Pings the service every 5 minutes to prevent it from sleeping
+    """
+    url = "https://folibuddy.onrender.com/"
+    
+    while True:
+        try:
+            time.sleep(300)  # Wait 5 minutes (300 seconds)
+            response = requests.get(url, timeout=10)
+            print(f"Keep-alive ping successful: {response.status_code}")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {e}")
+
+# Start keep-alive thread when app starts
+@app.on_event("startup")
+async def startup_event():
+    """
+    Run background tasks on startup
+    """
+    print("🚀 Starting keep-alive service...")
+    
+    # Start keep-alive thread
+    keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
+    keep_alive_thread.start()
+    
+    print("Keep-alive service started - will ping every 5 minutes")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
