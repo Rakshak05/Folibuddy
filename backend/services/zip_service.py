@@ -1,29 +1,59 @@
 import shutil
 import os
+import tempfile
+from pathlib import Path
 
-def zip_portfolio(folder_path: str) -> str:
+def zip_portfolio(folder_path: str, user_name: str = "Portfolio") -> str:
     """
-    Create a ZIP archive from a portfolio folder.
+    Create a ZIP archive from a portfolio folder with a named subfolder.
     
     Args:
         folder_path: Path to the portfolio folder to zip
+        user_name: Name of the user (used for folder name inside ZIP)
         
     Returns:
         str: Path to the created ZIP file
     """
-    # Create zip file path (folder_path + ".zip")
-    zip_path = folder_path + ".zip"
+    # Clean the user name for use in folder/file names
+    # Remove special characters and limit length
+    safe_name = "".join(c for c in user_name if c.isalnum() or c in (' ', '-', '_')).strip()
+    safe_name = safe_name.replace(' ', '_')[:50]  # Limit to 50 chars
     
-    # Use shutil.make_archive to create the zip file
-    # The base_name should NOT include .zip extension
-    # The format is 'zip'
-    # The root_dir is the folder to zip
-    shutil.make_archive(
-        base_name=folder_path,
-        format='zip',
-        root_dir=folder_path
-    )
+    if not safe_name:
+        safe_name = "Portfolio"
     
-    print(f"✅ Portfolio zipped at: {zip_path}")
+    # Create a temporary directory for restructuring
+    temp_dir = tempfile.mkdtemp()
     
-    return zip_path
+    try:
+        # Create the user-named folder inside temp dir
+        user_folder = os.path.join(temp_dir, safe_name)
+        os.makedirs(user_folder, exist_ok=True)
+        
+        # Copy all files from folder_path to the user-named folder
+        for item in os.listdir(folder_path):
+            source = os.path.join(folder_path, item)
+            destination = os.path.join(user_folder, item)
+            
+            if os.path.isfile(source):
+                shutil.copy2(source, destination)
+            elif os.path.isdir(source):
+                shutil.copytree(source, destination)
+        
+        # Create zip file path
+        zip_path = folder_path + ".zip"
+        
+        # Create the ZIP archive with the user-named folder inside
+        shutil.make_archive(
+            base_name=folder_path,
+            format='zip',
+            root_dir=temp_dir
+        )
+        
+        print(f"Portfolio zipped at: {zip_path}")
+        
+        return zip_path
+        
+    finally:
+        # Clean up temporary directory
+        shutil.rmtree(temp_dir, ignore_errors=True)

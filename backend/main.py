@@ -339,7 +339,7 @@ async def generate_portfolio_zip(background_tasks: BackgroundTasks):
     This endpoint:
     1. Loads portfolio data from saved JSON
     2. Generates portfolio files in temp folder
-    3. Creates ZIP archive
+    3. Creates ZIP archive with user's name
     4. Returns ZIP file for download
     5. Cleans up temp files in background
     
@@ -355,27 +355,35 @@ async def generate_portfolio_zip(background_tasks: BackgroundTasks):
                 content={"error": "No portfolio data found. Please upload a resume first."}
             )
         
+        # Get user's name and create safe filename
+        user_name = portfolio_data.get("name", "Portfolio")
+        safe_filename = "".join(c for c in user_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_filename = safe_filename.replace(' ', '_')[:50]  # Limit to 50 chars
+        
+        if not safe_filename:
+            safe_filename = "Portfolio"
+        
         # Generate portfolio files in temp folder
         folder_path = generate_portfolio_files(portfolio_data)
-        print(f"✅ Portfolio generated at: {folder_path}")
+        print(f"Portfolio generated at: {folder_path}")
         
-        # Create ZIP from the folder
-        zip_path = zip_portfolio(folder_path)
-        print(f"✅ Portfolio zipped at: {zip_path}")
+        # Create ZIP from the folder with user's name
+        zip_path = zip_portfolio(folder_path, user_name)
+        print(f"Portfolio zipped at: {zip_path}")
         
         # Schedule cleanup after response is sent
         background_tasks.add_task(shutil.rmtree, folder_path, ignore_errors=True)
         background_tasks.add_task(os.remove, zip_path)
         
-        # Return ZIP file for download
+        # Return ZIP file for download with user's name
         return FileResponse(
             path=zip_path,
-            filename="portfolio.zip",
+            filename=f"{safe_filename}_Portfolio.zip",
             media_type="application/zip"
         )
         
     except Exception as e:
-        print(f"❌ Error generating portfolio ZIP: {e}")
+        print(f"Error generating portfolio ZIP: {e}")
         import traceback
         traceback.print_exc()
         return JSONResponse(
