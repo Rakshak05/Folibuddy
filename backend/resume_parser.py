@@ -36,12 +36,35 @@ def extract_text_from_pdf(file):
     # Reset file pointer for pdfplumber
     file.seek(0)
     
-    # Extract text using pdfplumber
+    # Extract text using pdfplumber with adaptive spacing detection
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
+            # Try different x_tolerance values and pick the one with best spacing
+            # Lower tolerance = treats more gaps as spaces
+            best_text = ""
+            max_spaces = 0
+            
+            for tolerance in [1, 2, 3]:
+                try:
+                    test_text = page.extract_text(
+                        x_tolerance=tolerance,
+                        y_tolerance=3
+                    )
+                    if test_text:
+                        # Count spaces - more spaces usually means better word separation
+                        space_count = test_text.count(' ')
+                        if space_count > max_spaces:
+                            max_spaces = space_count
+                            best_text = test_text
+                except:
+                    continue
+            
+            # If all failed, use default
+            if not best_text:
+                best_text = page.extract_text()
+            
+            if best_text:
+                text += best_text + "\n"
     
     # Add extracted hyperlinks to the text so they can be found
     if hyperlinks:
