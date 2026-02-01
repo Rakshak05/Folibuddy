@@ -47,7 +47,7 @@ def keep_alive():
         try:
             time.sleep(300)  # Wait 5 minutes (300 seconds)
             response = requests.get(url, timeout=10)
-            print(f"Keep-alive ping successful: {response.status_code}")
+            # print(f"Keep-alive ping successful: {response.status_code}")
         except Exception as e:
             print(f"Keep-alive ping failed: {e}")
 
@@ -62,8 +62,6 @@ async def startup_event():
     # Start keep-alive thread
     keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
     keep_alive_thread.start()
-    
-    print("Keep-alive service started - will ping every 5 minutes")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

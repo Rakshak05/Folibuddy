@@ -1,51 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume to Portfolio - Upload</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 100px auto;
-            padding: 20px;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            position: relative;
         }
 
         .upload-container {
             background: white;
-            padding: 50px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
+            width: 90%;
+            max-width: 600px;
+            padding: clamp(20px, 5vw, 50px);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         h1 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 32px;
+            margin-bottom: clamp(8px, 2vh, 15px);
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 700;
         }
 
         .subtitle {
             color: #666;
-            margin-bottom: 40px;
-            font-size: 16px;
+            margin-bottom: clamp(20px, 4vh, 35px);
+            font-size: clamp(13px, 2.5vw, 16px);
+            line-height: 1.4;
         }
 
         .upload-area {
             border: 3px dashed #667eea;
-            border-radius: 10px;
-            padding: 40px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: clamp(20px, 4vh, 40px);
+            margin-bottom: clamp(15px, 3vh, 25px);
             cursor: pointer;
             transition: all 0.3s ease;
+            background-color: #fafafa;
         }
 
         .upload-area:hover,
         .upload-area.drag-over {
             background-color: #f0f4ff;
             border-color: #764ba2;
+            transform: translateY(-2px);
         }
 
         .upload-area.drag-over {
@@ -53,8 +78,8 @@
         }
 
         .upload-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: clamp(36px, 8vw, 52px);
+            margin-bottom: clamp(10px, 2vh, 20px);
         }
 
         input[type="file"] {
@@ -63,54 +88,136 @@
 
         .file-label {
             display: inline-block;
-            padding: 12px 30px;
+            padding: clamp(10px, 2vh, 14px) clamp(20px, 4vw, 35px);
             background-color: #667eea;
             color: white;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
+            font-size: clamp(13px, 2.5vw, 16px);
+            transition: all 0.3s ease;
+            font-weight: 600;
         }
 
         .file-label:hover {
             background-color: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .file-name {
-            margin-top: 15px;
+            margin-top: clamp(10px, 2vh, 15px);
             color: #666;
-            font-size: 14px;
+            font-size: clamp(12px, 2vw, 14px);
+            word-break: break-word;
         }
 
         button {
-            padding: 15px 40px;
-            font-size: 18px;
+            padding: clamp(12px, 2.5vh, 16px) clamp(30px, 6vw, 45px);
+            font-size: clamp(14px, 3vw, 18px);
             background-color: #28a745;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
+            margin-top: clamp(10px, 2vh, 20px);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            width: 100%;
+            max-width: 280px;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
         }
 
         button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
+            transform: none;
         }
 
         .note {
-            margin-top: 30px;
-            padding: 15px;
+            margin-top: clamp(15px, 3vh, 25px);
+            padding: clamp(12px, 2vh, 16px);
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
             text-align: left;
-            font-size: 14px;
+            font-size: clamp(11px, 2vw, 14px);
             color: #856404;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Mobile optimization */
+        @media (max-width: 600px) {
+            .upload-container {
+                width: 95%;
+                padding: 25px;
+                max-height: 95vh;
+            }
+
+            .upload-area {
+                padding: 25px 15px;
+            }
+
+            button {
+                max-width: 100%;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 400px) {
+            .upload-container {
+                width: 98%;
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .subtitle {
+                font-size: 13px;
+            }
+        }
+
+        /* Tablet landscape */
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .upload-container {
+                max-width: 550px;
+            }
+        }
+
+        /* Very small screens height */
+        @media (max-height: 600px) {
+            .upload-container {
+                padding: 15px;
+                max-height: 98vh;
+            }
+
+            .note {
+                font-size: 11px;
+                padding: 10px;
+            }
+
+            .upload-area {
+                padding: 20px;
+            }
+
+            h1 {
+                margin-bottom: 5px;
+            }
+
+            .subtitle {
+                margin-bottom: 15px;
+            }
         }
     </style>
 </head>
@@ -119,7 +226,7 @@
 
     <div class="upload-container">
         <h1>📄 Resume to Portfolio</h1>
-        <p class="subtitle">Transform your resume into a professional cover letter and portfolio</p>
+        <p class="subtitle">Transform your resume into a professional portfolio website</p>
 
         <form id="upload-form" onsubmit="handleSubmit(event)">
             <div class="upload-area" id="drop-zone" onclick="document.getElementById('resume').click()">
@@ -133,16 +240,26 @@
         </form>
 
         <div class="note">
-            <strong>What happens next?</strong><br>
+            <strong>What happens next?</strong>
             1. We'll extract your resume information<br>
             2. You can review and edit the details<br>
-            3. Generate your cover letter and portfolio
+            3. Generate your portfolio website
         </div>
     </div>
 
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('resume');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
         // Drag and drop event listeners
         dropZone.addEventListener('dragover', (e) => {
@@ -159,8 +276,13 @@
             dropZone.classList.remove('drag-over');
 
             if (e.dataTransfer.files.length) {
-                fileInput.files = e.dataTransfer.files;
-                showFileName();
+                const file = e.dataTransfer.files[0];
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    fileInput.files = e.dataTransfer.files;
+                    showFileName();
+                } else {
+                    alert('Please drop a PDF file only!');
+                }
             }
         });
 
@@ -171,15 +293,17 @@
             if (input.files.length > 0) {
                 fileNameDiv.textContent = input.files[0].name;
                 fileNameDiv.style.color = '#28a745';
+                fileNameDiv.style.fontWeight = '600';
             } else {
                 fileNameDiv.textContent = 'No file selected';
                 fileNameDiv.style.color = '#666';
+                fileNameDiv.style.fontWeight = 'normal';
             }
         }
 
         async function handleSubmit(event) {
             event.preventDefault();
-            event.stopPropagation();  // Prevent any bubbling
+            event.stopPropagation();
 
             const fileInput = document.getElementById('resume');
             const submitBtn = document.getElementById('submit-btn');
@@ -224,16 +348,7 @@
                     const errorText = await response.text().catch(() => 'Unknown error');
                     console.error('Server error:', errorText);
 
-                    alert('Error reading your resume.\n\n' +
-                        'This could be due to:\n' +
-                        '• Corrupted PDF file\n' +
-                        '• Unsupported PDF format\n' +
-                        '• Large file size\n\n' +
-                        'Please try:\n' +
-                        '1. Re-downloading your PDF\n' +
-                        '2. Converting to a standard PDF format\n' +
-                        '3. Reducing file size\n\n' +
-                        'Then click "Upload & Continue →" to try again.');
+                    alert('Error reading your resume.\n\nPlease try:\n1. Re-downloading your PDF\n2. Converting to standard PDF format\n3. Upload again');
 
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Upload & Continue →';
@@ -241,11 +356,7 @@
             } catch (error) {
                 console.error('Connection error:', error);
 
-                alert('Cannot connect to server!\n\n' +
-                    'Please ensure:\n' +
-                    '1. Backend is running (python -m uvicorn backend.main:app --reload)\n' +
-                    '2. Server is at http://127.0.0.1:8000\n\n' +
-                    'Then click "Upload & Continue →" to try again.');
+                alert('Cannot connect to server!\n\nPlease ensure the backend is running and try again.');
 
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Upload & Continue →';

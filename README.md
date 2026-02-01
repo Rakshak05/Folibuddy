@@ -654,7 +654,7 @@ type output\portfolio.json
 
 ---
 
-## 🚀 Future Enhancements
+## 🚀 Future Enhance`m`ents
 
 1. **Multiple Templates**: Support for different portfolio styles
 2. **Cover Letter Generator**: AI-generated cover letters
