@@ -1,11 +1,13 @@
 # Folibuddy - AI-Powered Resume to Portfolio Generator
 
-An AI-powered web application that transforms PDF resumes into beautiful, customizable personal portfolios. Folibuddy uses Large Language Models (LLMs) via Ollama to intelligently parse resume content, extract structured data, and generate publish-ready portfolio websites.
+An AI-powered web application that transforms PDF resumes into beautiful, customizable personal portfolios. Folibuddy uses Google Gemini 2.0 Flash to intelligently parse resume content, extract structured data, and generate publish-ready portfolio websites.
+
+**🌐 Live Demo:** [https://folibuddy.onrender.com/](https://folibuddy.onrender.com/)
 
 ## 🚀 Core Features
 
 - **PDF Resume Upload** → Extracts text and hyperlinks from PDF files
-- **AI-Powered Parsing** → Uses Ollama LLMs (llama3/llama3.2) to extract projects, experience, research
+- **AI-Powered Parsing** → Uses Google Gemini 2.0 Flash to extract projects, experience, research
 - **Interactive Editor** → Users can edit extracted data before generating portfolio
 - **Portfolio Generation** → Creates a static HTML/CSS portfolio website ready for GitHub Pages
 - **Profile Image Support** → Optional profile image upload and integration
@@ -34,7 +36,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 - **FastAPI** - Modern, high-performance web framework for building APIs
 - **Uvicorn** - Lightning-fast ASGI server for running FastAPI applications
 - **Jinja2** - Powerful template engine for HTML rendering
-- **Requests** - HTTP client library for Ollama API communication
+- **Requests** - HTTP client library for API communication
 - **Python-Multipart** - Multipart form data parsing for file uploads
 
 ### PDF Processing
@@ -42,8 +44,8 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 - **PyPDF2** - Hyperlink and annotation extraction from LaTeX-generated PDFs
 
 ### AI/LLM
-- **Ollama** - Local LLM inference engine for privacy-focused AI processing
-- **Models Used**: `llama3`, `llama3.2` - Open-source language models for intelligent parsing
+- **Google Gemini API** - Advanced AI for intelligent resume parsing and content extraction
+- **Model Used**: `gemini-2.0-flash` - Latest Google Gemini model for structured data extraction
 
 ### Frontend
 - **HTML5** - Modern semantic markup
@@ -72,8 +74,8 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  STEP 2: LLM PARSING (llm_project_extractor.py)                 │
-│  - Send raw text to Ollama LLM                                  │
+│  STEP 2: LLM PARSING (llm_gemini_parser.py)                     │
+│  - Send raw text to Google Gemini API                           │
 │  - Extract: Projects, Research, Experience                      │
 │  - Classify and structure data                                  │
 └────────────────────┬────────────────────────────────────────────┘
@@ -550,7 +552,7 @@ Desktop/Personal Portfolio/
 
 ### Prerequisites
 - Python 3.8+
-- Ollama installed and running
+- Google Gemini API key (Get one at "https://aistudio.google.com/app/apikey")
 - Git (optional)
 
 ### Installation Steps
@@ -566,13 +568,13 @@ Desktop/Personal Portfolio/
    pip install -r backend/requirements.txt
    ```
 
-3. **Install and start Ollama**
+3. **Set up Gemini API key**
    ```bash
-   # Install Ollama from https://ollama.ai
-   ollama serve
+   # Option 1: Export as environment variable
+   export GEMINI_API_KEY="your-api-key-here"
    
-   # In another terminal, pull the required model
-   ollama pull llama3
+   # Option 2: Create a .env file in project root
+   echo "GEMINI_API_KEY=your-api-key-here" > .env
    ```
 
 4. **Run the application**
@@ -587,17 +589,17 @@ Desktop/Personal Portfolio/
 
 ## 🐛 Troubleshooting
 
-### Issue: "Cannot connect to Ollama"
+### Issue: "Cannot connect to Gemini API"
 **Solution**:
-1. Check if Ollama is running: `ollama serve`
-2. Verify model is installed: `ollama pull llama3`
-3. Test connection: `curl http://localhost:11434/api/tags`
+1. Check if your API key is set: `echo $GEMINI_API_KEY`
+2. Verify API key is valid at [Google AI Studio](https://aistudio.google.com/)
+3. Ensure you have internet connection for API calls
 
 ### Issue: "No projects extracted"
 **Causes**:
 1. PDF doesn't have "PROJECTS" section
 2. Section is named differently (e.g., "PERSONAL PROJECTS")
-3. LLM failed to parse
+3. Gemini API failed to parse
 
 **Solution**:
 - Check `llm_project_extractor.py` line 136 regex
@@ -619,7 +621,7 @@ Desktop/Personal Portfolio/
 **Solution**:
 1. Ensure "EXPERIENCE" keyword exists in resume
 2. Check if LLM is classifying as "projects" instead
-3. Review LLM prompt in `llm_project_extractor.py` line 178-236
+3. Review Gemini prompt in `llm_gemini_parser.py`
 
 ---
 
@@ -679,8 +681,8 @@ This project is under active development.
 
 **Project**: Folibuddy  
 **Repository**: [github.com/Rakshak05/Folibuddy](https://github.com/Rakshak05/Folibuddy)  
-**Tech Stack**: FastAPI, Ollama, Jinja2, pdfplumber, PyPDF2  
-**LLM Models**: llama3, llama3.2 (via Ollama)
+**Tech Stack**: FastAPI, Google Gemini API, Jinja2, pdfplumber, PyPDF2  
+**LLM Model**: gemini-2.0-flash
 
 ---
 
