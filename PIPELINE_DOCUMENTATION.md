@@ -19,7 +19,7 @@
 
 ### Core Features
 - **PDF Resume Upload** → Extracts text and hyperlinks from PDF files
-- **AI-Powered Parsing** → Uses Ollama LLMs (llama3/llama3.2) to extract projects, experience, research
+- **AI-Powered Parsing** → Uses Google Gemini 2.0 Flash to extract projects, experience, research
 - **Interactive Editor** → Users can edit extracted data before generating portfolio
 - **Portfolio Generation** → Creates a static HTML/CSS portfolio website ready for GitHub Pages
 - **Profile Image Support** → Optional profile image upload and integration
@@ -43,8 +43,8 @@
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  STEP 2: LLM PARSING (llm_project_extractor.py)                 │
-│  - Send raw text to Ollama LLM                                  │
+│  STEP 2: LLM PARSING (llm_gemini_parser.py)                     │
+│  - Send raw text to Google Gemini API                           │
 │  - Extract: Projects, Research, Experience                      │
 │  - Classify and structure data                                  │
 └────────────────────┬────────────────────────────────────────────┘
@@ -89,10 +89,10 @@
 ### Stage 2: AI Parsing
 1. Raw text sent to `parse_resume(text)` function
 2. Regex extractors pull: name, email, phone, skills, links
-3. **LLM extractor** (`extract_projects_with_llm`) sends text to Ollama
+3. **LLM extractor** (`parse_resume_gemini`) sends text to Google Gemini API
 4. LLM returns structured JSON with:
    - **Projects** (title, description, repo)
-   - **Research** (title, description)
+   - **Research** (title, description, publication)
    - **Experience** (company, role, dates, description, skills)
 
 ### Stage 3: Data Persistence
@@ -137,8 +137,7 @@ Folibuddy/
 ├── backend/                        # Core backend logic
 │   ├── main.py                     # FastAPI app & routes
 │   ├── resume_parser.py            # PDF text extraction
-│   ├── llm_project_extractor.py    # LLM-based project extraction
-│   ├── llm_resume_parser.py        # LLM-based resume parsing (alternative)
+│   ├── llm_gemini_parser.py        # Gemini API-based resume parsing
 │   ├── portfolio.py                # Portfolio HTML generation
 │   ├── portfolio_generator.py      # Data persistence (JSON save/load)
 │   ├── llm_generator.py            # AI description generator
@@ -261,49 +260,43 @@ Folibuddy/
 
 ---
 
-### 4. **backend/llm_project_extractor.py** - LLM Parser
-**Purpose**: Extract projects, research, and experience using AI
+### 4. **backend/llm_gemini_parser.py** - Gemini API Parser
+**Purpose**: Extract projects, research, and experience using Google Gemini AI
 
 #### Key Functions:
 
-##### `extract_projects_with_llm(full_text)`
-- **Step 1**: Detect "PROJECTS" and "EXPERIENCE" sections
-- **Step 2**: Find section end (before EDUCATION/SKILLS)
-- **Step 3**: Normalize text (fix PDF wrapping issues)
-- **Step 4**: Send to Ollama LLM with structured prompt
-- **Step 5**: Parse JSON response
-- **Step 6**: Classify items into projects, research, experience
-- **Step 7**: Validate and return
+##### `parse_resume_gemini(resume_text, api_key=None)`
+- **Step 1**: Initialize Gemini client with API key
+- **Step 2**: Send resume text to Gemini with structured prompt
+- **Step 3**: Request JSON output with specific schema
+- **Step 4**: Handle retry logic for API rate limits (503/429 errors)
+- **Step 5**: Parse and validate JSON response
+- **Step 6**: Return structured resume data
 
-**LLM Prompt Structure**:
+**Gemini Prompt Structure**:
 ```
-Task: Clean and classify pre-extracted resume content
+Task: Extract structured information from resume text
 Rules:
-- Don't remove content
-- Don't merge items
-- Don't split items
-- Classify into: project, research, or experience
+- Extract ALL projects, experience, education, and skills
+- DO NOT invent or hallucinate data
+- If a field is missing, use empty string "" or empty array []
+- description fields MUST be arrays of strings (bullet points)
+- Research papers go in "research", NOT "projects"
+- Work experience goes in "experience", NOT "projects"
 
 Output JSON schema:
 {
-  "projects": [{title, description[], repo}],
-  "research": [{title, description[]}],
+  "projects": [{title, description[], technologies[], repo}],
+  "research": [{title, description[], publication}],
   "experience": [{company, role, from, to, description[], skills[]}]
 }
 ```
 
-##### `normalize_project_text(text)`
-- Merges wrapped lines (PDF extraction artifact)
-- Collapses multiple spaces
-- Fixes bullet point continuation
-
-##### `is_project_title(line)`
-- Strict detection to avoid false positives
-- Rejects bullets, long lines, action verbs
-- Must contain 3+ letters
-
-##### `extract_bullets(lines)`
-- Merges multi-line bullets that wrap across lines
+##### `call_gemini_with_retry(client, model, prompt, max_retries=5)`
+- Handles 503 UNAVAILABLE + 429 rate limits
+- Implements exponential backoff (2s, 4s, 8s, etc.)
+- Uses new google-genai 1.61.0+ API structure
+- Returns structured JSON response
 
 ---
 
@@ -442,8 +435,10 @@ Desktop/Personal Portfolio/
 
 ---
 
-### 10. **backend/llm_generator.py** - AI Description Generator
+### 10. **backend/llm_generator.py** - AI Description Generator (Optional)
 **Purpose**: Enhance project descriptions using LLM
+
+**Note**: This feature requires local Ollama installation and is optional.
 
 ##### `enhance_project_description(title, current_desc, repo_url)`
 - Sends project context to LLM
@@ -529,8 +524,10 @@ Desktop/Personal Portfolio/
 - **PyPDF2**: Hyperlink/annotation extraction
 
 ### AI/LLM
-- **Ollama**: Local LLM inference (llama3/llama3.2)
-- Models: `llama3`, `llama3.2`
+- **Google Gemini API**: Cloud-based AI inference
+- **SDK**: `google-genai` version 1.61.0+ (released January 30, 2026)
+- **Model**: `gemini-2.0-flash` - Fast, cost-effective model for structured data extraction
+- **Configuration**: Requires `GEMINI_API_KEY` environment variable
 
 ### Frontend
 - **HTML5**: Structure
@@ -541,8 +538,41 @@ Desktop/Personal Portfolio/
 
 ## Troubleshooting
 
-### Issue: "Cannot connect to Ollama"
+### Issue: "Error reading PDF" or "Resume parsing failed" (After Jan 30, 2026)
+**Cause**: Breaking changes in `google-genai` library version 1.61.0 released on January 30, 2026.
+
 **Solution**:
+1. **Update the library**:
+   ```bash
+   pip install --upgrade google-genai>=1.61.0
+   ```
+2. **Verify installation**:
+   ```bash
+   pip show google-genai
+   # Should show version 1.61.0 or higher
+   ```
+3. If errors persist, check your `.env` file has a valid `GEMINI_API_KEY`
+
+### Issue: "Cannot connect to Gemini API"
+**Solution**:
+1. Check if your API key is set:
+   ```bash
+   # Linux/Mac
+   echo $GEMINI_API_KEY
+   # Windows PowerShell
+   $env:GEMINI_API_KEY
+   ```
+2. Verify API key is valid at [Google AI Studio](https://aistudio.google.com/app/apikey)
+3. Ensure you have internet connection for API calls
+4. Check the `.env` file in project root:
+   ```
+   GEMINI_API_KEY=your-actual-api-key-here
+   ```
+
+### Issue: "Cannot connect to Ollama" (Legacy - no longer used for parsing)
+**Note**: Ollama is now only used for optional AI description generation, not for main parsing.
+
+**Solution** (if using AI description generator):
 1. Check if Ollama is running: `ollama serve`
 2. Verify model is installed: `ollama pull llama3`
 3. Test connection: `curl http://localhost:11434/api/tags`
@@ -573,7 +603,7 @@ Desktop/Personal Portfolio/
 **Solution**:
 1. Ensure "EXPERIENCE" keyword exists in resume
 2. Check if LLM is classifying as "projects" instead
-3. Review LLM prompt in `llm_project_extractor.py` line 178-236
+3. Review Gemini prompt in `llm_gemini_parser.py`
 
 ---
 
@@ -629,5 +659,5 @@ type output\portfolio.json
 
 ---
 
-**Last Updated**: January 22, 2026  
-**Version**: 1.0.0
+**Last Updated**: February 9, 2026  
+**Version**: 1.1.0 (Updated for Google Gemini API and google-genai 1.61.0+)

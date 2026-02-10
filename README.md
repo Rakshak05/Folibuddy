@@ -45,6 +45,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ### AI/LLM
 - **Google Gemini API** - Advanced AI for intelligent resume parsing and content extraction
+- **SDK Version**: `google-genai` 1.61.0+ (released January 30, 2026)
 - **Model Used**: `gemini-2.0-flash` - Latest Google Gemini model for structured data extraction
 
 ### Frontend
@@ -565,7 +566,12 @@ Desktop/Personal Portfolio/
 
 2. **Install dependencies**
    ```bash
-   pip install -r backend/requirements.txt
+   pip install -r requirements.txt
+   ```
+   
+   **Note**: If upgrading from an older version, ensure you have `google-genai>=1.61.0`:
+   ```bash
+   pip install --upgrade google-genai
    ```
 
 3. **Set up Gemini API key**
@@ -588,6 +594,21 @@ Desktop/Personal Portfolio/
 ---
 
 ## 🐛 Troubleshooting
+
+### Issue: "Error reading PDF" or "Resume parsing failed" (After Jan 30, 2026)
+**Cause**: Breaking changes in `google-genai` library version 1.61.0 released on January 30, 2026.
+
+**Solution**:
+1. **Update the library**:
+   ```bash
+   pip install --upgrade google-genai>=1.61.0
+   ```
+2. **Verify installation**:
+   ```bash
+   pip show google-genai
+   # Should show version 1.61.0 or higher
+   ```
+3. If your code is from before Feb 2026, pull the latest updates from the repository
 
 ### Issue: "Cannot connect to Gemini API"
 **Solution**:
@@ -686,5 +707,5 @@ This project is under active development.
 
 ---
 
-**Last Updated**: January 23, 2026  
-**Version**: 1.0.0
+**Last Updated**: February 9, 2026  
+**Version**: 1.1.0 (Updated for google-genai 1.61.0+ compatibility)

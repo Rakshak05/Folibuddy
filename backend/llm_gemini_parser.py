@@ -41,17 +41,19 @@ def call_gemini_with_retry(client, model: str, prompt: str, max_retries: int = 5
     Handles 503 UNAVAILABLE + 429 rate limits with exponential backoff.
     Uses JSON mode without strict schema to avoid validation errors.
     """
+    from google.genai import types
+    
     delay = 2  # seconds
 
     for attempt in range(1, max_retries + 1):
         try:
-            # Use JSON mode without strict schema
+            # Use JSON mode with new API structure (google-genai 1.61.0+)
             return client.models.generate_content(
                 model=model,
                 contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                },
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
             )
 
         except (ResourceExhausted, ServiceUnavailable) as e:
