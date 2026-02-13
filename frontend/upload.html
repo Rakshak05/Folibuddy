@@ -229,9 +229,9 @@
         <p class="subtitle">Transform your resume into a professional portfolio website</p>
 
         <form id="upload-form" onsubmit="handleSubmit(event)">
-            <div class="upload-area" id="drop-zone" onclick="document.getElementById('resume').click()">
+            <div class="upload-area" id="drop-zone">
                 <div class="upload-icon">📤</div>
-                <label for="resume" class="file-label">Choose or Drag PDF Resume</label>
+                <label for="resume" class="file-label" onclick="event.stopPropagation()">Choose or Drag PDF Resume</label>
                 <input type="file" id="resume" name="file" accept=".pdf" onchange="showFileName()">
                 <div class="file-name" id="file-name">No file selected</div>
             </div>
