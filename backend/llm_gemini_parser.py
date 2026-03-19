@@ -165,8 +165,7 @@ Resume Text:
         # Generate response with retry logic
         response = call_gemini_with_retry(
             client,
-            # model="gemini-2.0-flash-exp",
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",  # Updated: gemini-2.0-flash is deprecated
             prompt=prompt,
             max_retries=5
         )
