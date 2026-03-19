@@ -328,7 +328,7 @@
                             alert(data.error || 'Failed to generate description');
                         }
                     } catch (error) {
-                        alert('Error: Could not connect to server. Make sure Ollama is running.');
+                        alert('Could not connect to server. Please ensure the backend is running and try again.');
                     } finally {
                         aiButton.textContent = originalText;
                         aiButton.disabled = false;

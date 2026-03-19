@@ -46,7 +46,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 ### AI/LLM
 - **Google Gemini API** - Advanced AI for intelligent resume parsing and content extraction
 - **SDK Version**: `google-genai` 1.61.0+ (released January 30, 2026)
-- **Model Used**: `gemini-2.0-flash` - Latest Google Gemini model for structured data extraction
+- **Model Used**: `gemini-2.5-flash` - Latest Google Gemini model for structured data extraction
 
 ### Frontend
 - **HTML5** - Modern semantic markup
@@ -121,7 +121,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 ### Stage 2: AI Parsing
 1. Raw text sent to `parse_resume(text)` function
 2. Regex extractors pull: name, email, phone, skills, links
-3. **LLM extractor** (`extract_projects_with_llm`) sends text to Ollama
+3. **LLM extractor** (`parse_resume_gemini`) sends text to Google Gemini API
 4. LLM returns structured JSON with:
    - **Projects** (title, description, repo)
    - **Research** (title, description)
@@ -294,49 +294,37 @@ Folibuddy/
 
 ---
 
-### 4. **backend/llm_project_extractor.py** - LLM Parser
-**Purpose**: Extract projects, research, and experience using AI
+### 4. **backend/llm_gemini_parser.py** - Gemini API Parser
+**Purpose**: Extract projects, research, and experience using Google Gemini AI
 
 #### Key Functions:
 
-##### `extract_projects_with_llm(full_text)`
-- **Step 1**: Detect "PROJECTS" and "EXPERIENCE" sections
-- **Step 2**: Find section end (before EDUCATION/SKILLS)
-- **Step 3**: Normalize text (fix PDF wrapping issues)
-- **Step 4**: Send to Ollama LLM with structured prompt
-- **Step 5**: Parse JSON response
-- **Step 6**: Classify items into projects, research, experience
-- **Step 7**: Validate and return
+##### `parse_resume_gemini(resume_text, api_key=None)`
+- **Step 1**: Initialize Gemini client with API key
+- **Step 2**: Send resume text to Gemini with structured prompt
+- **Step 3**: Request JSON output with specific schema
+- **Step 4**: Handle retry logic for rate limits (503/429 errors)
+- **Step 5**: Parse and validate JSON response
+- **Step 6**: Return structured resume data
 
 **LLM Prompt Structure**:
 ```
-Task: Clean and classify pre-extracted resume content
+Task: Extract structured information from resume text
 Rules:
-- Don't remove content
-- Don't merge items
-- Don't split items
-- Classify into: project, research, or experience
+- Extract ALL projects, experience, education, and skills
+- DO NOT invent or hallucinate data
+- If a field is missing, use empty string "" or empty array []
+- description fields MUST be arrays of strings (bullet points)
+- Research papers go in "research", NOT "projects"
+- Work experience goes in "experience", NOT "projects"
 
 Output JSON schema:
 {
-  "projects": [{title, description[], repo}],
-  "research": [{title, description[]}],
+  "projects": [{title, description[], technologies[], repo}],
+  "research": [{title, description[], publication}],
   "experience": [{company, role, from, to, description[], skills[]}]
 }
 ```
-
-##### `normalize_project_text(text)`
-- Merges wrapped lines (PDF extraction artifact)
-- Collapses multiple spaces
-- Fixes bullet point continuation
-
-##### `is_project_title(line)`
-- Strict detection to avoid false positives
-- Rejects bullets, long lines, action verbs
-- Must contain 3+ letters
-
-##### `extract_bullets(lines)`
-- Merges multi-line bullets that wrap across lines
 
 ---
 
@@ -475,17 +463,13 @@ Desktop/Personal Portfolio/
 
 ---
 
-### 10. **backend/llm_generator.py** - AI Description Generator
-**Purpose**: Enhance project descriptions using LLM
+### 10. **POST /generate-description** - AI Description Generator
+**Purpose**: Enhance project descriptions using Google Gemini AI
 
-##### `enhance_project_description(title, current_desc, repo_url)`
-- Sends project context to LLM
-- Requests professional, concise description
-- Returns formatted description text
-
-##### `check_ollama_available()`
-- Pings Ollama API
-- Returns True if service is running
+- Accepts `{title, repo_url, current_description}` as JSON
+- Fetches GitHub README via the public GitHub API (no auth required)
+- Sends project title + README context to Gemini
+- Returns 4–6 bullet-point descriptions formatted for the portfolio
 
 ---
 
@@ -515,8 +499,8 @@ Desktop/Personal Portfolio/
                       │ Raw Text
                       ▼
          ┌───────────────────────────┐
-         │ llm_project_extractor.py  │
-         │ (Ollama LLM)              │
+         │   llm_gemini_parser.py    │
+         │   (Google Gemini API)     │
          └────────────┬──────────────┘
                       │
                       │ Structured Data
@@ -703,7 +687,7 @@ This project is under active development.
 **Project**: Folibuddy  
 **Repository**: [github.com/Rakshak05/Folibuddy](https://github.com/Rakshak05/Folibuddy)  
 **Tech Stack**: FastAPI, Google Gemini API, Jinja2, pdfplumber, PyPDF2  
-**LLM Model**: gemini-2.0-flash
+**LLM Model**: gemini-2.5-flash
 
 ---
 

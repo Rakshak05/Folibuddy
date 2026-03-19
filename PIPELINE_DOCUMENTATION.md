@@ -15,7 +15,7 @@
 
 ## Overview
 
-**Folibuddy** is an AI-powered web application that transforms PDF resumes into beautiful, customizable personal portfolios. It uses LLMs (Large Language Models) via Ollama to intelligently parse resume content, extract structured data, and generate publish-ready portfolio websites.
+**Folibuddy** is an AI-powered web application that transforms PDF resumes into beautiful, customizable personal portfolios. It uses Google Gemini AI to intelligently parse resume content, extract structured data, and generate publish-ready portfolio websites.
 
 ### Core Features
 - **PDF Resume Upload** → Extracts text and hyperlinks from PDF files
@@ -435,19 +435,13 @@ Desktop/Personal Portfolio/
 
 ---
 
-### 10. **backend/llm_generator.py** - AI Description Generator (Optional)
-**Purpose**: Enhance project descriptions using LLM
+### 10. **POST /generate-description** - AI Description Generator
+**Purpose**: Enhance project descriptions using Google Gemini AI
 
-**Note**: This feature requires local Ollama installation and is optional.
-
-##### `enhance_project_description(title, current_desc, repo_url)`
-- Sends project context to LLM
-- Requests professional, concise description
-- Returns formatted description text
-
-##### `check_ollama_available()`
-- Pings Ollama API
-- Returns True if service is running
+- Accepts `{title, repo_url, current_description}` as JSON
+- Fetches GitHub README via the public GitHub API (no auth required)
+- Sends project title + README context to Gemini
+- Returns 4–6 bullet-point descriptions formatted for the portfolio
 
 ---
 
@@ -477,8 +471,8 @@ Desktop/Personal Portfolio/
                       │ Raw Text
                       ▼
          ┌───────────────────────────┐
-         │ llm_project_extractor.py  │
-         │ (Ollama LLM)              │
+         │   llm_gemini_parser.py    │
+         │   (Google Gemini API)     │
          └────────────┬──────────────┘
                       │
                       │ Structured Data
@@ -517,7 +511,7 @@ Desktop/Personal Portfolio/
 - **FastAPI**: Web framework for API routes
 - **Jinja2**: Template engine for HTML rendering
 - **Uvicorn**: ASGI server
-- **Requests**: HTTP client for Ollama API
+- **Requests**: HTTP client for GitHub API (README fetching)
 
 ### PDF Processing
 - **pdfplumber**: Text extraction
@@ -526,7 +520,7 @@ Desktop/Personal Portfolio/
 ### AI/LLM
 - **Google Gemini API**: Cloud-based AI inference
 - **SDK**: `google-genai` version 1.61.0+ (released January 30, 2026)
-- **Model**: `gemini-2.0-flash` - Fast, cost-effective model for structured data extraction
+- **Model**: `gemini-2.5-flash` - Fast, cost-effective model for structured data extraction
 - **Configuration**: Requires `GEMINI_API_KEY` environment variable
 
 ### Frontend
@@ -569,13 +563,13 @@ Desktop/Personal Portfolio/
    GEMINI_API_KEY=your-actual-api-key-here
    ```
 
-### Issue: "Cannot connect to Ollama" (Legacy - no longer used for parsing)
-**Note**: Ollama is now only used for optional AI description generation, not for main parsing.
+### Issue: "AI description generation not working"
+**Cause**: Gemini API key missing or GitHub repo is private/doesn't have a README.
 
-**Solution** (if using AI description generator):
-1. Check if Ollama is running: `ollama serve`
-2. Verify model is installed: `ollama pull llama3`
-3. Test connection: `curl http://localhost:11434/api/tags`
+**Solution**:
+1. Ensure `GEMINI_API_KEY` is set in your `.env` file
+2. Verify the GitHub repo URL is correct and the repo is public
+3. If the repo has no README, the AI will generate a description from the title alone
 
 ### Issue: "No projects extracted"
 **Causes**:
@@ -654,8 +648,8 @@ type output\portfolio.json
 
 **Project**: Folibuddy  
 **Author**: [Your Name]  
-**Tech Stack**: FastAPI, Ollama, Jinja2, pdfplumber  
-**LLM Models**: llama3, llama3.2 (via Ollama)  
+**Tech Stack**: FastAPI, Google Gemini API, Jinja2, pdfplumber  
+**LLM Model**: gemini-2.5-flash  
 
 ---
 

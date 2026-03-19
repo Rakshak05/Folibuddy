@@ -348,7 +348,11 @@
                     const errorText = await response.text().catch(() => 'Unknown error');
                     console.error('Server error:', errorText);
 
-                    alert('Error reading your resume.\n\nPlease try:\n1. Re-downloading your PDF\n2. Converting to standard PDF format\n3. Upload again');
+                    if (response.status === 503 && errorText.includes('GEMINI_API_ERROR')) {
+                        alert('Resume processing is currently unavailable.\n\nThe AI model powering this service has been deprecated by Google. The integration is being updated to the latest API version.\n\nPlease check back shortly.');
+                    } else {
+                        alert('Error reading your resume.\n\nPlease try:\n1. Re-downloading your PDF\n2. Converting to standard PDF format\n3. Upload again');
+                    }
 
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Upload & Continue →';

@@ -3,12 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel
 import os
 import shutil
 import threading
 import time
 import requests
+import json
+import re
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from backend.resume_parser import extract_text_from_pdf, parse_resume
 from backend.utils.formatters import clean_text
@@ -82,6 +88,97 @@ async def health():
     }
 
 
+class DescriptionRequest(BaseModel):
+    title: str
+    repo_url: Optional[str] = ""
+    current_description: Optional[str] = ""
+
+
+@app.post("/generate-description")
+async def generate_description(req: DescriptionRequest):
+    """
+    Use Gemini to generate a project description.
+    If a GitHub repo URL is provided, fetches the README for context.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Gemini API key not configured."}
+        )
+
+    # --- Try to fetch README from GitHub ---
+    readme_content = ""
+    repo_url = (req.repo_url or "").strip()
+
+    if repo_url:
+        # Extract owner/repo from URL like https://github.com/owner/repo
+        match = re.search(r"github\.com/([^/]+)/([^/\s?#]+)", repo_url)
+        if match:
+            owner, repo = match.group(1), match.group(2).rstrip(".git")
+            try:
+                api_url = f"https://api.github.com/repos/{owner}/{repo}/readme"
+                headers = {"Accept": "application/vnd.github.v3.raw"}
+                gh_response = requests.get(api_url, headers=headers, timeout=8)
+                if gh_response.status_code == 200:
+                    # Trim to first 3000 chars to stay within prompt limits
+                    readme_content = gh_response.text[:3000]
+                    print(f"✅ Fetched README for {owner}/{repo} ({len(readme_content)} chars)")
+                else:
+                    print(f"⚠️ GitHub README fetch returned {gh_response.status_code}")
+            except Exception as e:
+                print(f"⚠️ Could not fetch GitHub README: {e}")
+
+    # --- Build Gemini prompt ---
+    context_section = ""
+    if readme_content:
+        context_section = f"\n\nGitHub README (for context):\n{readme_content}"
+    elif req.current_description:
+        context_section = f"\n\nExisting description (improve/expand this):\n{req.current_description}"
+
+    prompt = f"""You are a professional technical writer helping create a portfolio website.
+
+Generate exactly 4-6 concise, impactful bullet points describing the following project for a portfolio.
+
+Project Title: {req.title}{context_section}
+
+Rules:
+- Each bullet point on its own line, starting with a capital letter (no dashes or bullets)
+- Focus on what was BUILT, technologies USED, and impact/outcome
+- Be specific and technical but easy to understand
+- Do NOT use markdown formatting, asterisks, or dashes
+- Return ONLY the bullet points, one per line, nothing else
+"""
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="text/plain",
+            ),
+        )
+
+        raw = response.text.strip()
+        # Clean up any stray bullet markers just in case
+        lines = [line.lstrip("-•* ").strip() for line in raw.splitlines() if line.strip()]
+        description = "\n".join(lines)
+
+        print(f"✅ AI description generated for: {req.title}")
+        return {"description": description}
+
+    except Exception as e:
+        print(f"❌ Gemini error in generate-description: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"error": f"AI generation failed: {str(e)}"}
+        )
+
+
 @app.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     """API endpoint that returns JSON (for frontend/script.js)"""
@@ -150,6 +247,15 @@ async def upload_resume_web(file: UploadFile = File(...)):
         print(f"ERROR: {e}")
         import traceback
         traceback.print_exc()
+
+        error_str = str(e).lower()
+        # Detect Gemini / Google API failures specifically
+        if any(kw in error_str for kw in ["gemini", "google", "api_key", "resourceexhausted", "serviceunavailable", "429", "503", "model", "deprecated"]):
+            return HTMLResponse(
+                content="GEMINI_API_ERROR",
+                status_code=503
+            )
+
         return HTMLResponse(content=f"<h1>Error processing resume</h1><p>{str(e)}</p>", status_code=500)
 
 
