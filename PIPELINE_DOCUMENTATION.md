@@ -167,18 +167,20 @@ Folibuddy/
 ## Detailed Pipeline Steps
 
 ### 1. **run.py** - Application Launcher
-**Purpose**: Start the FastAPI server
+**Purpose**: Sets up Python path so `backend/` modules are importable, then exposes the FastAPI `app` for uvicorn.
 
-```python
-# Adds project root to Python path
-# Starts uvicorn server on http://127.0.0.1:8000
-# Enables hot reload for development
+**Start the server with**:
+```bash
+python -m uvicorn run:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-**Key Details**:
-- Host: `127.0.0.1`
-- Port: `8000`
-- Reload: `True` (watches for file changes)
+**Flag reference**:
+|    Flag    |    Value    |          Meaning             |
+|------------|-------------|------------------------------|
+| `run:app`  | —           | Load `app` from `run.py`     |
+| `--host`   | `127.0.0.1` | Localhost only               |
+| `--port`   | `8000`      | Port number                  |
+| `--reload` | —           | Auto-restart on file changes |
 
 ---
 

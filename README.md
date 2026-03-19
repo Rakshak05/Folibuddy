@@ -567,10 +567,14 @@ Desktop/Personal Portfolio/
    echo "GEMINI_API_KEY=your-api-key-here" > .env
    ```
 
-4. **Run the application**
+4. **Start the development server**
    ```bash
-   python run.py
+   python -m uvicorn run:app --host 127.0.0.1 --port 8000 --reload
    ```
+   > `run:app` → loads the `app` object from `run.py`  
+   > `--host 127.0.0.1` → local only (use `0.0.0.0` to expose on network)  
+   > `--port 8000` → serves on port 8000  
+   > `--reload` → auto-restarts on file changes (development mode)
 
 5. **Access the application**
    - Open your browser and navigate to `http://127.0.0.1:8000/`
