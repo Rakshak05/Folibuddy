@@ -2,9 +2,9 @@
 
 An AI-powered web application that transforms PDF resumes into beautiful, customizable personal portfolios. Folibuddy uses Google Gemini 2.0 Flash to intelligently parse resume content, extract structured data, and generate publish-ready portfolio websites.
 
-**🌐 Live Demo:** [https://folibuddy.onrender.com/](https://folibuddy.onrender.com/)
+**Live Demo:** [https://folibuddy.onrender.com/](https://folibuddy.onrender.com/)
 
-## 🚀 Core Features
+## Core Features
 
 - **PDF Resume Upload** → Extracts text and hyperlinks from PDF files
 - **AI-Powered Parsing** → Uses Google Gemini 2.0 Flash to extract projects, experience, research
@@ -15,7 +15,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Tech Stack](#-tech-stack)
 2. [High-Level Architecture](#-high-level-architecture)
@@ -30,7 +30,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **FastAPI** - Modern, high-performance web framework for building APIs
@@ -58,7 +58,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ---
 
-## 🏗️ High-Level Architecture
+## High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -109,7 +109,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ---
 
-## 📝 Complete Workflow
+## Complete Workflow
 
 ### Stage 1: Upload & Extraction
 1. User navigates to `http://127.0.0.1:8000/`
@@ -158,7 +158,7 @@ An AI-powered web application that transforms PDF resumes into beautiful, custom
 
 ---
 
-## 📂 File Structure & Responsibilities
+## File Structure & Responsibilities
 
 ```
 Folibuddy/
@@ -198,7 +198,7 @@ Folibuddy/
 
 ---
 
-## 🔧 Detailed Pipeline Steps
+## Detailed Pipeline Steps
 
 ### 1. **run.py** - Application Launcher
 **Purpose**: Start the FastAPI server
@@ -473,7 +473,7 @@ Desktop/Personal Portfolio/
 
 ---
 
-## 🌐 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Input | Output | Purpose |
 |--------|----------|-------|--------|---------|
@@ -485,7 +485,7 @@ Desktop/Personal Portfolio/
 
 ---
 
-## 📊 Data Flow Diagram
+## Data Flow Diagram
 
 ```
 ┌─────────┐
@@ -533,7 +533,7 @@ Desktop/Personal Portfolio/
 
 ---
 
-## 💻 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - Python 3.8+
@@ -581,7 +581,7 @@ Desktop/Personal Portfolio/
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: "Error reading PDF" or "Resume parsing failed" (After Jan 30, 2026)
 **Cause**: Breaking changes in `google-genai` library version 1.61.0 released on January 30, 2026.
@@ -634,7 +634,7 @@ Desktop/Personal Portfolio/
 
 ---
 
-## 🔍 Development Tips
+## Development Tips
 
 ### Testing LLM Extraction
 Run diagnostic test:
@@ -665,7 +665,7 @@ type output\portfolio.json
 
 ---
 
-## 🚀 Future Enhance`m`ents
+## Future Enhancements
 
 1. **Multiple Templates**: Support for different portfolio styles
 2. **Cover Letter Generator**: AI-generated cover letters
@@ -680,13 +680,13 @@ type output\portfolio.json
 
 ---
 
-## 📄 License
+## License
 
 This project is under active development.
 
 ---
 
-## 👨‍💻 Author & Credits
+## Author & Credits
 
 **Project**: Folibuddy  
 **Repository**: [github.com/Rakshak05/Folibuddy](https://github.com/Rakshak05/Folibuddy)  
@@ -695,5 +695,4 @@ This project is under active development.
 
 ---
 
-**Last Updated**: February 9, 2026  
-**Version**: 1.1.0 (Updated for google-genai 1.61.0+ compatibility)
+**Last Updated**: April 14, 2026 
