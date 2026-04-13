@@ -403,30 +403,6 @@ section {
     padding-left: 60px;
 }
 
-/* Timeline Dot - REMOVED for cleaner look */
-/*
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: #0ea5e9;
-    border: 4px solid white;
-    border-radius: 50%;
-    top: 32px;
-    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
-    z-index: 1;
-}
-
-.timeline-left::before {
-    right: -10px;
-}
-
-.timeline-right::before {
-    left: -10px;
-}
-*/
-
 /* Timeline Card */
 .timeline-card {
     background: #f8fafc;

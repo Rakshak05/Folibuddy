@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ✅ Simplified Schema (no complex nesting)
+# Simplified Schema (no complex nesting)
 
 class ResumeData(BaseModel):
     name: str = Field(description="Full name of the candidate")
@@ -34,9 +34,9 @@ class ResumeData(BaseModel):
     extracurriculars: List[str] = Field(default_factory=list, description="Extracurricular activities")
 
 
-# ✅ Gemini API with retry logic
+# Gemini API with retry logic
 
-def call_gemini_with_retry(client, model: str, prompt: str, max_retries: int = 5):
+def call_gemini_with_retry(client, model_name: str, prompt: str, max_retries: int = 5):
     """
     Handles 503 UNAVAILABLE + 429 rate limits with exponential backoff.
     Uses JSON mode without strict schema to avoid validation errors.
@@ -49,7 +49,7 @@ def call_gemini_with_retry(client, model: str, prompt: str, max_retries: int = 5
         try:
             # Use JSON mode with new API structure (google-genai 1.61.0+)
             return client.models.generate_content(
-                model=model,
+                model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -70,7 +70,7 @@ def call_gemini_with_retry(client, model: str, prompt: str, max_retries: int = 5
             raise e
 
 
-# ✅ Main Parsing Function
+# Main Parsing Function
 
 def parse_resume_gemini(resume_text: str, api_key: str = None) -> dict:
     """
@@ -95,7 +95,7 @@ def parse_resume_gemini(resume_text: str, api_key: str = None) -> dict:
     # Initialize Gemini client
     client = genai.Client(api_key=api_key)
     
-    # ✅ Detailed prompt with clear JSON structure
+    # Detailed prompt with clear JSON structure
     prompt = f"""
 You are an expert resume parser. Extract structured information from the following resume text.
 
@@ -165,7 +165,7 @@ Resume Text:
         # Generate response with retry logic
         response = call_gemini_with_retry(
             client,
-            model="gemini-2.5-flash",  # Updated: gemini-2.0-flash is deprecated
+            "models/gemini-2.5-flash",  # Pass the model name as a string
             prompt=prompt,
             max_retries=5
         )
@@ -180,7 +180,7 @@ Resume Text:
         # Validate with Pydantic (lenient)
         validated = ResumeData(**raw_data)
         
-        print(f"✅ Gemini parsed successfully:")
+        print(f"Gemini parsed successfully:")
         print(f"   - Name: {validated.name}")
         print(f"   - Projects: {len(validated.projects)}")
         print(f"   - Experience: {len(validated.experience)}")
@@ -211,7 +211,7 @@ Resume Text:
         raise
 
 
-# ✅ Standalone Test Function
+# Standalone Test Function
 
 def test_gemini_parser():
     """Test Gemini parser with sample resume text."""
@@ -254,7 +254,7 @@ XYZ University
     try:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            print("⚠️ GEMINI_API_KEY not set. Set it in your environment or .env file")
+            print("GEMINI_API_KEY not set. Set it in your environment or .env file")
             return
         
         print("Testing Gemini parser...\n")

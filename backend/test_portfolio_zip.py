@@ -42,41 +42,41 @@ def test_portfolio_generation():
         "profile_image": None
     }
     
-    print("🧪 Testing portfolio generation...")
+    print("Testing portfolio generation...")
     
     # Generate portfolio
     folder_path = generate_portfolio_files(sample_data)
     
     # Check that folder exists
     assert os.path.exists(folder_path), f"Folder not created: {folder_path}"
-    print(f"✅ Portfolio folder created: {folder_path}")
+    print(f"Portfolio folder created: {folder_path}")
     
     # Check that index.html exists
     index_path = os.path.join(folder_path, "index.html")
     assert os.path.exists(index_path), "index.html not created"
-    print("✅ index.html created")
+    print("index.html created")
     
     # Check that README exists
     readme_path = os.path.join(folder_path, "README.md")
     assert os.path.exists(readme_path), "README.md not created"
-    print("✅ README.md created")
+    print("README.md created")
     
     # Test ZIP creation
-    print("\n🧪 Testing ZIP creation...")
+    print("\nTesting ZIP creation...")
     zip_path = zip_portfolio(folder_path)
     
     # Check that ZIP exists
     assert os.path.exists(zip_path), f"ZIP not created: {zip_path}"
-    print(f"✅ ZIP created: {zip_path}")
+    print(f"ZIP created: {zip_path}")
     
     # Cleanup
-    print("\n🧹 Cleaning up test files...")
+    print("\nCleaning up test files...")
     shutil.rmtree(folder_path, ignore_errors=True)
     if os.path.exists(zip_path):
         os.remove(zip_path)
-    print("✅ Cleanup complete")
+    print("Cleanup complete")
     
-    print("\n✨ All tests passed!")
+    print("\nAll tests passed!")
 
 if __name__ == "__main__":
     test_portfolio_generation()

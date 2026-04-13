@@ -20,7 +20,7 @@ def generate_portfolio(resume):
     
     # Using modern portfolio template
     template_name = "template.html"
-    print(f"🎨 USING TEMPLATE: {template_name}")
+    print(f"USING TEMPLATE: {template_name}")
     template = env.get_template(template_name)
     
     # Ensure all required fields have defaults
@@ -101,7 +101,7 @@ Simply open `index.html` in your web browser.
     
     (folder / "README.md").write_text(readme_content, encoding="utf-8")
     
-    print(f"✅ Portfolio generated at: {folder}")
-    print(f"📄 Template used: {template_name}")
+    print(f"Portfolio generated at: {folder}")
+    print(f"Template used: {template_name}")
     
     return str(folder)

@@ -11,7 +11,7 @@ def save_portfolio_data(data: dict):
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print("✅ Portfolio data saved to output/portfolio.json")
+    print("Portfolio data saved to output/portfolio.json")
 
 
 def load_portfolio_data():

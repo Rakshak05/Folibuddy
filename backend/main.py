@@ -123,11 +123,11 @@ async def generate_description(req: DescriptionRequest):
                 if gh_response.status_code == 200:
                     # Trim to first 3000 chars to stay within prompt limits
                     readme_content = gh_response.text[:3000]
-                    print(f"✅ Fetched README for {owner}/{repo} ({len(readme_content)} chars)")
+                    print(f"Fetched README for {owner}/{repo} ({len(readme_content)} chars)")
                 else:
-                    print(f"⚠️ GitHub README fetch returned {gh_response.status_code}")
+                    print(f"GitHub README fetch returned {gh_response.status_code}")
             except Exception as e:
-                print(f"⚠️ Could not fetch GitHub README: {e}")
+                print(f"Could not fetch GitHub README: {e}")
 
     # --- Build Gemini prompt ---
     context_section = ""
@@ -156,7 +156,7 @@ Rules:
 
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="models/gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="text/plain",
@@ -168,11 +168,11 @@ Rules:
         lines = [line.lstrip("-•* ").strip() for line in raw.splitlines() if line.strip()]
         description = "\n".join(lines)
 
-        print(f"✅ AI description generated for: {req.title}")
+        print(f"AI description generated for: {req.title}")
         return {"description": description}
 
     except Exception as e:
-        print(f"❌ Gemini error in generate-description: {e}")
+        print(f"Gemini error in generate-description: {e}")
         return JSONResponse(
             status_code=503,
             content={"error": f"AI generation failed: {str(e)}"}

@@ -40,11 +40,11 @@ async function generateAndDownloadPortfolio() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        console.log('✅ Portfolio downloaded successfully!');
+        console.log('Portfolio downloaded successfully!');
         alert('Portfolio downloaded successfully!');
 
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('Error:', error);
         alert('Error: ' + error.message);
     }
 }
@@ -90,7 +90,7 @@ async function generatePortfolioWithLoading() {
         }
 
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('Error:', error);
         if (messageDiv) {
             messageDiv.textContent = 'Error: ' + error.message;
             messageDiv.style.color = 'red';
@@ -107,7 +107,7 @@ async function generatePortfolioWithLoading() {
 // Example 3: Add download button to your page
 function addDownloadButton() {
     const button = document.createElement('button');
-    button.textContent = '📦 Download Portfolio ZIP';
+    button.textContent = 'Download Portfolio ZIP';
     button.className = 'btn btn-primary download-btn';
     button.style.cssText = `
         padding: 12px 24px;
@@ -130,20 +130,20 @@ function addDownloadButton() {
 
     button.onclick = async () => {
         button.disabled = true;
-        button.textContent = '⏳ Generating...';
+        button.textContent = 'Generating...';
 
         try {
             await generateAndDownloadPortfolio();
-            button.textContent = '✅ Downloaded!';
+            button.textContent = 'Downloaded!';
             setTimeout(() => {
-                button.textContent = '📦 Download Portfolio ZIP';
+                button.textContent = 'Download Portfolio ZIP';
                 button.disabled = false;
             }, 3000);
         } catch (error) {
-            button.textContent = '❌ Failed - Try Again';
+            button.textContent = 'Failed - Try Again';
             button.style.background = '#f44336';
             setTimeout(() => {
-                button.textContent = '📦 Download Portfolio ZIP';
+                button.textContent = 'Download Portfolio ZIP';
                 button.style.background = '#4CAF50';
                 button.disabled = false;
             }, 3000);
@@ -233,7 +233,7 @@ async function generateWithProgress() {
         }, 2000);
 
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('Error:', error);
         progressDiv.innerHTML = `
             <div style="text-align: center;">
                 <div style="font-size: 24px; margin-bottom: 10px; color: red;">❌</div>

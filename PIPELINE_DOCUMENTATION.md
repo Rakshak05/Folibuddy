@@ -1,6 +1,6 @@
 # Folibuddy - Complete Pipeline Documentation
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Overview](#overview)
 2. [High-Level Architecture](#high-level-architecture)
 3. [Complete Workflow](#complete-workflow)
